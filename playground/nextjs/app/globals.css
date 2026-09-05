@@ -1,0 +1,16 @@
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+		sans-serif;
+	background-color: #222831;
+	color: rgba(255, 255, 255, 0.87);
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
