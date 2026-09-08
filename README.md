@@ -1,9 +1,8 @@
-![npm](https://img.shields.io/npm/v/react-use-active-scroll?color=46c119) ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/smastrom/react-use-active-scroll/tests.yml?branch=main&label=tests)
-![dependency-count](https://img.shields.io/badge/dependency%20count-0-success)
+![npm](https://img.shields.io/npm/v/react-use-active-scroll?color=46c119)
 
-# Vue Use Active Scroll
+# React Use Active Scroll
 
-[Live Demo](https://react-use-active-scroll.netlify.app/) — Examples: [With Template Refs](https://stackblitz.com/edit/vitejs-vite-sywzg8?file=src%252Fpages%252FIndex.vue) - [Nuxt Content Nested TOC](https://stackblitz.com/edit/github-oh85gq?file=components%2FSidebar.vue)
+[Live Demo](https://condorheroblog.github.io/react-use-active-scroll/)
 
 <br />
 
@@ -490,4 +489,4 @@ onMounted(() => (isSSR.value = false))
 
 ## License
 
-MIT
+[MIT](https://github.com/condorheroblog/react-use-active-scroll/blob/main/LICENSE) License © 2026-Present [Condor Hero](https://github.com/condorheroblog)

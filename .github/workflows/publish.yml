@@ -1,35 +1,40 @@
-name: Publish to NPM
+name: Build and Deploy
+
+permissions:
+  contents: write
 
 on:
   push:
-    tags: [ 'v*' ]
+    branches:
+      - main
+    paths:
+      - 'playground/vite/**'
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  tests-workflow:
-    uses: ./.github/workflows/tests.yml
-  publish:
-    needs: [ tests-workflow ]
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 21.x
-          registry-url: 'https://registry.npmjs.org'
+      - name: Checkout 🛎️
+        uses: actions/checkout@v7
+
       - uses: pnpm/action-setup@v6
-        name: Install pnpm
         with:
-          version: 8
-          run_install: true
-      - name: Build
-        run: pnpm build
-      - name: Pack
-        run: rm -f *.tgz && npm pack
-      - name: Publish
-        run: npm publish *.tgz --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          version: 11.7.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: pnpm
+
+      - name: Install and Build 🔧
+        run: |
+          pnpm install -r
+          pnpm --filter react-use-active-scroll-vite-playground run build
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          clean: true
+          folder: dist
