@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 export default defineConfig({
 	plugins: [react(), tailwindcss(), codeInspectorPlugin({ bundler: "vite" })],
-	base: "/",
+	base: "/react-use-active-scroll/",
 	resolve: {
 		alias: {
 			// 将包名映射到本地源码，避免演示项目依赖已构建产物。
