@@ -56,11 +56,17 @@ export function isRefObject(value: Targets): value is RefObject<string[] | HTMLE
 
 /**
  * 将用户选项与默认值合并为完整配置。
+ * 注意：必须逐字段使用 ?? 合并，浅展开（...options）会让显式传入的
+ * undefined 覆盖默认值，例如 minWidth: undefined 会生成非法媒体查询。
  */
 export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOptions {
 	return {
-		...defaultOptions,
-		...options,
+		root: options.root ?? defaultOptions.root,
+		jumpToFirst: options.jumpToFirst ?? defaultOptions.jumpToFirst,
+		jumpToLast: options.jumpToLast ?? defaultOptions.jumpToLast,
+		overlayHeight: options.overlayHeight ?? defaultOptions.overlayHeight,
+		minWidth: options.minWidth ?? defaultOptions.minWidth,
+		replaceHash: options.replaceHash ?? defaultOptions.replaceHash,
 		edgeOffset: {
 			first: options.edgeOffset?.first ?? defaultOptions.edgeOffset.first,
 			last: options.edgeOffset?.last ?? defaultOptions.edgeOffset.last,

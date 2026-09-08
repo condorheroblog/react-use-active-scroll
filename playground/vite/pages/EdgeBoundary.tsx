@@ -55,10 +55,15 @@ export function EdgeBoundary() {
 	)
 
 	return (
+
 		<PageShell
 			tocData={{
 				menuItems,
 				targets,
+				// edgeOffset 仅在 jumpToFirst / jumpToLast 关闭时才参与判定（见 README），
+				// 本页专门演示边缘偏移，因此显式关闭首尾强制激活。
+				jumpToFirst: false,
+				jumpToLast: false,
 				edgeOffset: { first: options.edgeFirst, last: options.edgeLast },
 				boundaryOffset: { toTop: options.boundaryTop, toBottom: options.boundaryBottom },
 			}}
@@ -66,8 +71,12 @@ export function EdgeBoundary() {
 			extraControls={extraControls}
 		>
 			<div className="mx-auto max-w-2xl">
-				<p className="mb-8 text-sm text-muted">
-					调整侧边栏滑块观察首/尾 section 激活时机变化。edgeOffset 影响首尾目标，boundaryOffset 影响滚动边界判定。
+				<p className="mb-8 text-sm leading-relaxed text-muted">
+					触发阈值不止一条：虚线 <span className="text-accent">↓ / ↑ 触发线</span> 分别是向下、向上滚动时的判定线，
+					随 boundaryOffset.toBottom / toTop 移动；点线 <span className="text-accent">首目标线 / 尾目标线</span>
+					随 edgeOffset.first / last 移动。若页面顶部暂无高亮，向右拖动 edgeOffset.first
+					可让首目标提前激活；edgeOffset.last 为负值，尾目标线默认位于视口外上方，
+					滚动到页面底部的留白观察区可看到最后一个目标延迟取消激活。
 				</p>
 
 				<div className="space-y-16">
@@ -82,6 +91,14 @@ export function EdgeBoundary() {
 							<p className="leading-relaxed text-muted">{section.text}</p>
 						</section>
 					))}
+
+					{/* 尾部留白观察区：edgeOffset.last 需要足够的尾部滚动空间才能观察到 */}
+					<div className="flex h-[150vh] items-start justify-center rounded-md border border-dashed border-border pt-10">
+						<p className="max-w-sm text-center text-xs leading-relaxed text-muted">
+							尾部留白观察区：持续向下滚动经过本区域，观察最后一个 section 何时取消高亮
+							（edgeOffset.last 越负，取消得越晚）；再向上滚动，观察它何时提前恢复高亮。
+						</p>
+					</div>
 				</div>
 			</div>
 		</PageShell>

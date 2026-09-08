@@ -20,6 +20,7 @@
 		"@types/react": "^19.2.18",
 		"@types/react-dom": "^19.2.7",
 		"@vitejs/plugin-react": "^6.1.1",
+		"code-inspector-plugin": "^2.0.8",
 		"tailwindcss": "^4.3.3",
 		"typescript": "^6.0.3",
 		"vite": "8.2.2"

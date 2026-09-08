@@ -22,9 +22,11 @@ export function Container() {
 					本页面滚动发生在下方容器内部，window 本身不滚动。root 选项指向容器 ref。
 				</p>
 
+				{/* scroll-behavior-dynamic：跟随 --ScrollBehavior 变量，
+				    由 DemoControls 在 native(custom/smooth/auto) 间切换 */}
 				<div
 					ref={containerRef}
-					className="h-[70vh] max-h-[600px] overflow-auto rounded-md border border-border p-6 scroll-smooth"
+					className="scroll-behavior-dynamic h-[70vh] max-h-[600px] overflow-auto rounded-md border border-border p-6"
 				>
 					{/* 容器内激活阈值参考线 */}
 					<div className="sticky top-2 z-10 border-t border-dashed border-accent">

@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react'
+import { useContext, useMemo, useRef } from 'react'
 import animateScrollTo from 'animated-scroll-to'
 // 通过 vite.config.js 的 alias 映射到本地源码，保持导入与包名一致。
 import { useActiveScroll } from 'react-use-active-scroll'
@@ -57,10 +57,14 @@ export function TOC() {
 	// ====== 唯一一处调用核心包 Hook ======
 	const { activeIndex, activeId, setActive, isActive } = useActiveScroll(targets, options)
 
-	// 通过 data-target 属性获取激活项高度，驱动 Tracker 平移。
+	const navRef = useRef<HTMLElement>(null)
+
+	// 通过 data-target 属性在当前 nav 内获取激活项高度，驱动 Tracker 平移。
+	// 限定在 nav 内查询：移动端抽屉与桌面侧边栏可能同时挂载，
+	// 全域查询会命中 display:none 的节点，scrollHeight 恒为 0。
 	const activeItemHeight = useMemo(() => {
 		if (!activeId) return 0
-		const el = document.querySelector(`[data-target="${activeId}"]`) as HTMLElement | null
+		const el = navRef.current?.querySelector(`[data-target="${activeId}"]`) as HTMLElement | null
 		return el?.scrollHeight || 0
 	}, [activeId])
 
@@ -93,12 +97,13 @@ export function TOC() {
 	}
 
 	return (
-		<nav className="relative rounded-md border border-border bg-card p-3">
+		<nav ref={navRef} className="relative rounded-md border border-border bg-card p-3">
 			<div className="mb-2 text-xs font-medium text-muted">目录</div>
-			<ul className="relative list-none space-y-1 p-0">
+			{/* 不使用 space-y：Tracker 按 单项高度 * 索引 平移，项间不能有额外间隙 */}
+			<ul className="relative list-none p-0">
 				{activeIndex >= 0 && activeItemHeight > 0 && (
 					<span
-						className="absolute left-0 w-[calc(100%+12px)] rounded-r-sm border-l-2 border-accent bg-accent-soft transition-transform duration-100"
+						className="pointer-events-none absolute left-0 w-[calc(100%+12px)] rounded-r-sm border-l-2 border-accent bg-accent-soft backdrop-blur-sm transition-transform duration-100"
 						style={{
 							height: activeItemHeight,
 							transform: `translateY(calc(${activeItemHeight}px * ${activeIndex}))`,
@@ -111,7 +116,7 @@ export function TOC() {
 							data-target={item.href}
 							href={`#${item.href}`}
 							aria-current={isActive(item.href) ? 'true' : undefined}
-							className={`relative block truncate text-sm transition-colors ${
+							className={`relative block truncate rounded-r-sm px-2 py-1 text-sm transition-colors ${
 								isActive(item.href)
 									? 'font-medium text-accent'
 									: 'text-muted hover:text-fg'

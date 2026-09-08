@@ -37,7 +37,10 @@ html {
 	font-family: var(--font-sans);
 	background-color: var(--color-bg);
 	color: var(--color-fg);
-	scroll-behavior: smooth;
+	/* 跟随 --ScrollBehavior 变量（DemoControls 动态切换 smooth / auto），
+	   不能硬编码 smooth：scrollIntoView({ behavior: 'auto' }) 按规范会
+	   回退到 CSS 的计算值，硬编码会导致 auto 选项无效。 */
+	scroll-behavior: var(--ScrollBehavior);
 }
 
 body {
@@ -49,11 +52,16 @@ body {
 }
 
 /**
- * 容器滚动场景使用 CSS 变量控制 scroll-behavior，
- * 由 DemoControls 根据 native / custom 点击类型动态设置。
+ * 滚动行为由 DemoControls 根据 native / custom 点击类型与 smooth / auto
+ * 选项动态写入 --ScrollBehavior：窗口滚动作用于 <html>；
+ * 容器滚动场景需给滚动容器本身加 .scroll-behavior-dynamic。
  */
 :root {
 	--ScrollBehavior: smooth;
+}
+
+.scroll-behavior-dynamic {
+	scroll-behavior: var(--ScrollBehavior);
 }
 
 /**

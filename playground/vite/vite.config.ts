@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { codeInspectorPlugin } from "code-inspector-plugin";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -11,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * 仅负责把 React + React Router 应用打包为静态站点，与根目录库构建无关。
  */
 export default defineConfig({
-	plugins: [react(), tailwindcss()],
+	plugins: [react(), tailwindcss(), codeInspectorPlugin({ bundler: "vite" })],
 	base: "/",
 	resolve: {
 		alias: {
