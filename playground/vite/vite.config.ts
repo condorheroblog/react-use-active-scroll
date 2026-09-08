@@ -12,7 +12,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * 仅负责把 React + React Router 应用打包为静态站点，与根目录库构建无关。
  */
 export default defineConfig({
-	plugins: [react(), tailwindcss(), codeInspectorPlugin({ bundler: "vite" })],
+	plugins: [codeInspectorPlugin({ bundler: "vite" }), react(), tailwindcss()],
 	base: "/react-use-active-scroll/",
 	resolve: {
 		alias: {

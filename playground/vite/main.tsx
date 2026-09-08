@@ -11,21 +11,26 @@ import { Responsive } from './pages/Responsive'
 import { ApiShowcase } from './pages/ApiShowcase'
 import './styles.css'
 
-const router = createBrowserRouter([
+const router = createBrowserRouter(
+	[
+		{
+			path: '/',
+			element: <App />,
+			children: [
+				{ index: true, element: <Basic /> },
+				{ path: 'container', element: <Container /> },
+				{ path: 'fixed-header', element: <FixedHeader /> },
+				{ path: 'edge-boundary', element: <EdgeBoundary /> },
+				{ path: 'jump-toggles', element: <JumpToggles /> },
+				{ path: 'responsive', element: <Responsive /> },
+				{ path: 'api-showcase', element: <ApiShowcase /> },
+			],
+		},
+	],
 	{
-		path: '/',
-		element: <App />,
-		children: [
-			{ index: true, element: <Basic /> },
-			{ path: 'container', element: <Container /> },
-			{ path: 'fixed-header', element: <FixedHeader /> },
-			{ path: 'edge-boundary', element: <EdgeBoundary /> },
-			{ path: 'jump-toggles', element: <JumpToggles /> },
-			{ path: 'responsive', element: <Responsive /> },
-			{ path: 'api-showcase', element: <ApiShowcase /> },
-		],
-	},
-])
+		basename: '/react-use-active-scroll/',
+	}
+)
 
 ReactDOM.createRoot(document.getElementById('app')!).render(
 	<React.StrictMode>
