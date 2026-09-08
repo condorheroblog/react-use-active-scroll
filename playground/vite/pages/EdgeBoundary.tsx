@@ -5,7 +5,7 @@ import type { EdgeBoundaryOptions } from '../types'
 
 /**
  * EdgeBoundary 页面。
- * 演示 edgeOffset 与 boundaryOffset 对首/尾及滚动边界激活时机的影响。
+ * 演示 edges 与 offset 对首/尾及滚动边界激活时机的影响。
  */
 export function EdgeBoundary() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
@@ -13,9 +13,9 @@ export function EdgeBoundary() {
 
 	const [options, setOptions] = useState<EdgeBoundaryOptions>({
 		edgeFirst: 100,
-		edgeLast: -100,
-		boundaryTop: 0,
-		boundaryBottom: 0,
+		edgeLast: 100,
+		offsetToStart: 0,
+		offsetToEnd: 0,
 	})
 
 	const extraControls = (
@@ -23,32 +23,32 @@ export function EdgeBoundary() {
 			<div className="mb-2 text-xs font-medium text-muted">Local Options</div>
 			<div className="space-y-3">
 				<Range
-					label="edgeOffset.first"
+					label="edges.first"
 					value={options.edgeFirst}
 					min={0}
 					max={300}
 					onChange={v => setOptions(prev => ({ ...prev, edgeFirst: v }))}
 				/>
 				<Range
-					label="edgeOffset.last"
+					label="edges.last"
 					value={options.edgeLast}
-					min={-300}
-					max={0}
+					min={0}
+					max={300}
 					onChange={v => setOptions(prev => ({ ...prev, edgeLast: v }))}
 				/>
 				<Range
-					label="boundaryOffset.toTop"
-					value={options.boundaryTop}
+					label="offset.toStart"
+					value={options.offsetToStart}
 					min={0}
 					max={200}
-					onChange={v => setOptions(prev => ({ ...prev, boundaryTop: v }))}
+					onChange={v => setOptions(prev => ({ ...prev, offsetToStart: v }))}
 				/>
 				<Range
-					label="boundaryOffset.toBottom"
-					value={options.boundaryBottom}
+					label="offset.toEnd"
+					value={options.offsetToEnd}
 					min={0}
 					max={200}
-					onChange={v => setOptions(prev => ({ ...prev, boundaryBottom: v }))}
+					onChange={v => setOptions(prev => ({ ...prev, offsetToEnd: v }))}
 				/>
 			</div>
 		</div>
@@ -60,12 +60,10 @@ export function EdgeBoundary() {
 			tocData={{
 				menuItems,
 				targets,
-				// edgeOffset 仅在 jumpToFirst / jumpToLast 关闭时才参与判定（见 README），
-				// 本页专门演示边缘偏移，因此显式关闭首尾强制激活。
-				jumpToFirst: false,
-				jumpToLast: false,
-				edgeOffset: { first: options.edgeFirst, last: options.edgeLast },
-				boundaryOffset: { toTop: options.boundaryTop, toBottom: options.boundaryBottom },
+				// edges 传数字即关闭首尾强制激活并允许"无激活"：
+				// 首目标距触发线 edges.first 时提前激活，尾目标底部越过触发线 edges.last 后解除。
+				edges: { first: options.edgeFirst, last: options.edgeLast },
+				offset: { toStart: options.offsetToStart, toEnd: options.offsetToEnd },
 			}}
 			demoButtons={{ pushSection, shiftSection }}
 			extraControls={extraControls}
@@ -73,9 +71,9 @@ export function EdgeBoundary() {
 			<div className="mx-auto max-w-2xl">
 				<p className="mb-8 text-sm leading-relaxed text-muted">
 					触发阈值不止一条：虚线 <span className="text-accent">↓ / ↑ 触发线</span> 分别是向下、向上滚动时的判定线，
-					随 boundaryOffset.toBottom / toTop 移动；点线 <span className="text-accent">首目标线 / 尾目标线</span>
-					随 edgeOffset.first / last 移动。若页面顶部暂无高亮，向右拖动 edgeOffset.first
-					可让首目标提前激活；edgeOffset.last 为负值，尾目标线默认位于视口外上方，
+					随 offset.toEnd / toStart 移动；点线 <span className="text-accent">首目标线 / 尾目标线</span>
+					随 edges.first / last 移动。若页面顶部暂无高亮，向右拖动 edges.first
+					可让首目标提前激活；edges.last 为正距离，尾目标线默认位于视口外上方，
 					滚动到页面底部的留白观察区可看到最后一个目标延迟取消激活。
 				</p>
 
@@ -92,11 +90,11 @@ export function EdgeBoundary() {
 						</section>
 					))}
 
-					{/* 尾部留白观察区：edgeOffset.last 需要足够的尾部滚动空间才能观察到 */}
+					{/* 尾部留白观察区：edges.last 需要足够的尾部滚动空间才能观察到 */}
 					<div className="flex h-[150vh] items-start justify-center rounded-md border border-dashed border-border pt-10">
 						<p className="max-w-sm text-center text-xs leading-relaxed text-muted">
 							尾部留白观察区：持续向下滚动经过本区域，观察最后一个 section 何时取消高亮
-							（edgeOffset.last 越负，取消得越晚）；再向上滚动，观察它何时提前恢复高亮。
+							（edges.last 越大，取消得越晚）；再向上滚动，观察它何时提前恢复高亮。
 						</p>
 					</div>
 				</div>

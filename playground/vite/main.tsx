@@ -6,7 +6,7 @@ import { Basic } from './pages/Basic'
 import { Container } from './pages/Container'
 import { FixedHeader } from './pages/FixedHeader'
 import { EdgeBoundary } from './pages/EdgeBoundary'
-import { JumpToggles } from './pages/JumpToggles'
+import { Edges } from './pages/Edges'
 import { Responsive } from './pages/Responsive'
 import { ApiShowcase } from './pages/ApiShowcase'
 import './styles.css'
@@ -21,7 +21,7 @@ const router = createBrowserRouter(
 				{ path: 'container', element: <Container /> },
 				{ path: 'fixed-header', element: <FixedHeader /> },
 				{ path: 'edge-boundary', element: <EdgeBoundary /> },
-				{ path: 'jump-toggles', element: <JumpToggles /> },
+				{ path: 'edges', element: <Edges /> },
 				{ path: 'responsive', element: <Responsive /> },
 				{ path: 'api-showcase', element: <ApiShowcase /> },
 			],

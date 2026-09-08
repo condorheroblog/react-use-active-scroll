@@ -19,38 +19,34 @@ export function TOC() {
 		targets,
 		containerRef,
 		overlayHeight = 0,
-		replaceHash = false,
-		jumpToFirst,
-		jumpToLast,
+		hash = 'off',
+		edges,
 		minWidth,
-		edgeOffset,
-		boundaryOffset,
+		offset,
 	} = tocData
 	const { clickType, scrollBehavior } = radios
 
 	// 稳定 options 对象引用，避免核心库 useEffect 因引用变化反复清理激活态。
+	const offsetToStart = typeof offset === 'number' ? offset : offset?.toStart
+	const offsetToEnd = typeof offset === 'number' ? offset : offset?.toEnd
 	const options = useMemo(
 		() => ({
 			root: containerRef,
 			overlayHeight,
-			replaceHash,
-			jumpToFirst,
-			jumpToLast,
+			hash,
+			edges,
 			minWidth,
-			edgeOffset,
-			boundaryOffset,
+			offset,
 		}),
 		[
 			containerRef,
 			overlayHeight,
-			replaceHash,
-			jumpToFirst,
-			jumpToLast,
+			hash,
 			minWidth,
-			edgeOffset?.first,
-			edgeOffset?.last,
-			boundaryOffset?.toTop,
-			boundaryOffset?.toBottom,
+			edges?.first,
+			edges?.last,
+			offsetToStart,
+			offsetToEnd,
 		],
 	)
 

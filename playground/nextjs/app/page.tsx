@@ -19,7 +19,7 @@ export default function HomePage() {
 
 	const { activeId, isActive } = useActiveScroll(targetIds, {
 		root: containerRef,
-		replaceHash: true,
+		hash: "replace",
 	});
 
 	return (

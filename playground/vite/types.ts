@@ -37,18 +37,14 @@ export interface TOCData {
 	containerRef?: React.RefObject<HTMLElement | null>
 	/** 固定头部场景下，演示应用通过 options 透传的核心包配置 */
 	overlayHeight?: number
-	/** 是否同步 URL hash */
-	replaceHash?: boolean
-	/** 到达顶部时是否强制激活第一个目标 */
-	jumpToFirst?: boolean
-	/** 到达底部时是否强制激活最后一个目标 */
-	jumpToLast?: boolean
+	/** URL hash 同步方式 */
+	hash?: 'off' | 'replace' | 'push'
+	/** 边缘目标（首个/末个）的激活策略 */
+	edges?: { first?: boolean | number; last?: boolean | number }
 	/** 仅在视口宽度大于等于此值时启用监听 */
 	minWidth?: number
-	/** 边缘目标额外偏移 */
-	edgeOffset?: { first?: number; last?: number }
-	/** 滚动边界偏移 */
-	boundaryOffset?: { toTop?: number; toBottom?: number }
+	/** 滚动边界偏移，数字形式同时应用于两个方向 */
+	offset?: number | { toStart?: number; toEnd?: number }
 }
 
 /**
@@ -57,14 +53,14 @@ export interface TOCData {
 export interface EdgeBoundaryOptions {
 	edgeFirst: number
 	edgeLast: number
-	boundaryTop: number
-	boundaryBottom: number
+	offsetToStart: number
+	offsetToEnd: number
 }
 
 /**
- * JumpToggles 页面使用的本地开关状态。
+ * Edges 页面使用的本地开关状态。
  */
-export interface JumpToggleOptions {
-	jumpToFirst: boolean
-	jumpToLast: boolean
+export interface EdgesOptions {
+	first: boolean
+	last: boolean
 }

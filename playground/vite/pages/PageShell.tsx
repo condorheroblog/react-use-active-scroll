@@ -21,19 +21,25 @@ interface PageShellProps {
  * 避免核心库 useActiveScroll 因 props 引用变化而反复清理激活态。
  */
 export function PageShell({ children, tocData, demoButtons, extraControls }: PageShellProps) {
+	// 将 offset 归一化为两个方向的原始值，作为稳定引用的比较依赖。
+	const offsetToStart = typeof tocData.offset === 'number'
+		? tocData.offset
+		: tocData.offset?.toStart
+	const offsetToEnd = typeof tocData.offset === 'number'
+		? tocData.offset
+		: tocData.offset?.toEnd
+
 	const stableTocData = useMemo(() => tocData, [
 		tocData.menuItems,
 		tocData.targets,
 		tocData.containerRef,
 		tocData.overlayHeight,
-		tocData.replaceHash,
-		tocData.jumpToFirst,
-		tocData.jumpToLast,
+		tocData.hash,
 		tocData.minWidth,
-		tocData.edgeOffset?.first,
-		tocData.edgeOffset?.last,
-		tocData.boundaryOffset?.toTop,
-		tocData.boundaryOffset?.toBottom,
+		tocData.edges?.first,
+		tocData.edges?.last,
+		offsetToStart,
+		offsetToEnd,
 	])
 	const stableDemoButtons = useMemo(
 		() => demoButtons,

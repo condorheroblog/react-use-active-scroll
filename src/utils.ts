@@ -8,13 +8,11 @@ export const MOUNT_IDLE_FRAMES = 10;
 
 export const defaultOptions: ResolvedOptions = {
 	root: null,
-	jumpToFirst: true,
-	jumpToLast: true,
+	edges: { first: true, last: true },
 	overlayHeight: 0,
 	minWidth: 0,
-	replaceHash: false,
-	edgeOffset: { first: 100, last: -100 },
-	boundaryOffset: { toTop: 0, toBottom: 0 },
+	hash: "off",
+	offset: { toStart: 0, toEnd: 0 },
 };
 
 /**
@@ -55,6 +53,17 @@ export function isRefObject(value: Targets): value is RefObject<string[] | HTMLE
 }
 
 /**
+ * 归一化边缘策略：true 保持强制激活；数字原样保留；false 视为 0（无提前量）。
+ */
+function resolveEdge(value: boolean | number | undefined, fallback: true | number): true | number {
+	if (value === undefined)
+		return fallback;
+	if (value === false)
+		return 0;
+	return value;
+}
+
+/**
  * 将用户选项与默认值合并为完整配置。
  * 注意：必须逐字段使用 ?? 合并，浅展开（...options）会让显式传入的
  * undefined 覆盖默认值，例如 minWidth: undefined 会生成非法媒体查询。
@@ -62,19 +71,19 @@ export function isRefObject(value: Targets): value is RefObject<string[] | HTMLE
 export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOptions {
 	return {
 		root: options.root ?? defaultOptions.root,
-		jumpToFirst: options.jumpToFirst ?? defaultOptions.jumpToFirst,
-		jumpToLast: options.jumpToLast ?? defaultOptions.jumpToLast,
+		edges: {
+			first: resolveEdge(options.edges?.first, defaultOptions.edges.first),
+			last: resolveEdge(options.edges?.last, defaultOptions.edges.last),
+		},
 		overlayHeight: options.overlayHeight ?? defaultOptions.overlayHeight,
 		minWidth: options.minWidth ?? defaultOptions.minWidth,
-		replaceHash: options.replaceHash ?? defaultOptions.replaceHash,
-		edgeOffset: {
-			first: options.edgeOffset?.first ?? defaultOptions.edgeOffset.first,
-			last: options.edgeOffset?.last ?? defaultOptions.edgeOffset.last,
-		},
-		boundaryOffset: {
-			toTop: options.boundaryOffset?.toTop ?? defaultOptions.boundaryOffset.toTop,
-			toBottom: options.boundaryOffset?.toBottom ?? defaultOptions.boundaryOffset.toBottom,
-		},
+		hash: options.hash ?? defaultOptions.hash,
+		offset: typeof options.offset === "number"
+			? { toStart: options.offset, toEnd: options.offset }
+			: {
+				toStart: options.offset?.toStart ?? defaultOptions.offset.toStart,
+				toEnd: options.offset?.toEnd ?? defaultOptions.offset.toEnd,
+			},
 	};
 }
 

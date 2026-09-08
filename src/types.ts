@@ -16,16 +16,21 @@ export interface UseActiveScrollOptions {
 	root?: HTMLElement | null | RefObject<HTMLElement | null>
 
 	/**
-	 * 是否在到达滚动区域顶部时强制激活第一个目标。
-	 * @default true
+	 * 边缘目标（首个/末个）的激活策略。
 	 */
-	jumpToFirst?: boolean
+	edges?: {
+		/**
+		 * - true（默认）：始终激活第一个目标，即使未越过触发线
+		 * - number：允许"无激活"；第一个目标距触发线该距离时提前激活
+		 */
+		first?: boolean | number
 
-	/**
-	 * 是否在到达滚动区域底部时强制激活最后一个目标。
-	 * @default true
-	 */
-	jumpToLast?: boolean
+		/**
+		 * - true（默认）：始终激活最后一个目标
+		 * - number：允许"无激活"；最后一个目标底部越过触发线该距离后解除
+		 */
+		last?: boolean | number
+	}
 
 	/**
 	 * 顶部固定遮挡物高度，单位 px。
@@ -40,43 +45,29 @@ export interface UseActiveScrollOptions {
 	minWidth?: number
 
 	/**
-	 * 是否在滚动过程中通过 history.replaceState 同步替换 URL hash。
-	 * @default false
+	 * 滚动过程中同步 URL hash 的方式。
+	 * - 'off'：不同步 URL hash
+	 * - 'replace'：通过 history.replaceState 替换当前历史记录
+	 * - 'push'：通过 history.pushState 新增历史记录
+	 * @default 'off'
 	 */
-	replaceHash?: boolean
+	hash?: "off" | "replace" | "push"
 
 	/**
-	 * 边缘目标的额外偏移。
+	 * 滚动边界偏移。传入数字时同时应用于两个方向。
 	 */
-	edgeOffset?: {
+	offset?: number | {
 		/**
-		 * 第一个目标的额外偏移，单位 px。
-		 * @default 100
-		 */
-		first?: number
-
-		/**
-		 * 最后一个目标的额外偏移，单位 px。
-		 * @default -100
-		 */
-		last?: number
-	}
-
-	/**
-	 * 滚动边界偏移。
-	 */
-	boundaryOffset?: {
-		/**
-		 * 向上滚动时的边界偏移，单位 px。
+		 * 向上滚动（朝滚动起点）时的边界偏移，单位 px。
 		 * @default 0
 		 */
-		toTop?: number
+		toStart?: number
 
 		/**
-		 * 向下滚动时的边界偏移，单位 px。
+		 * 向下滚动（朝滚动终点）时的边界偏移，单位 px。
 		 * @default 0
 		 */
-		toBottom?: number
+		toEnd?: number
 	}
 }
 
@@ -121,8 +112,16 @@ export interface TargetsCache {
 
 /**
  * 合并默认值后的完整配置类型。
+ * - edges 已归一化：true 表示强制激活；数字表示边缘偏移距离（false 视为 0）。
+ * - offset 已归一化为对象形式（传入数字时拆分到两个方向）。
  */
-export interface ResolvedOptions extends Required<UseActiveScrollOptions> {
-	edgeOffset: Required<NonNullable<UseActiveScrollOptions["edgeOffset"]>>
-	boundaryOffset: Required<NonNullable<UseActiveScrollOptions["boundaryOffset"]>>
+export interface ResolvedOptions extends Omit<Required<UseActiveScrollOptions>, "edges" | "offset"> {
+	edges: {
+		first: true | number
+		last: true | number
+	}
+	offset: {
+		toStart: number
+		toEnd: number
+	}
 }

@@ -6,7 +6,7 @@ const routes = [
 	{ path: '/container', label: 'Container' },
 	{ path: '/fixed-header', label: 'FixedHeader' },
 	{ path: '/edge-boundary', label: 'EdgeBoundary' },
-	{ path: '/jump-toggles', label: 'JumpToggles' },
+	{ path: '/edges', label: 'Edges' },
 	{ path: '/responsive', label: 'Responsive' },
 	{ path: '/api-showcase', label: 'ApiShowcase' },
 ]

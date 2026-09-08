@@ -114,19 +114,20 @@ export function useActiveScroll(
 	 * 到达顶部/底部边界时强制激活首尾目标。
 	 */
 	function onEdgeReached(): boolean {
-		if (!optsRef.current.jumpToFirst && !optsRef.current.jumpToLast)
+		const { first, last: edgesLast } = optsRef.current.edges;
+		if (first !== true && edgesLast !== true)
 			return false;
 		if (!rootRef.current)
 			return false;
 
 		const { isTop, isBottom } = getEdges(rootRef.current, isWindowRootRef.current);
 
-		if (optsRef.current.jumpToFirst && isTop) {
+		if (first === true && isTop) {
 			setActiveEl(targetsRef.current.els[0] || null);
 			return true;
 		}
 
-		if (optsRef.current.jumpToLast && isBottom) {
+		if (edgesLast === true && isBottom) {
 			setActiveEl(last(targetsRef.current.els) || null);
 			return true;
 		}
@@ -142,16 +143,17 @@ export function useActiveScroll(
 		if (els.length === 0)
 			return;
 
-		let firstOutEl: HTMLElement | null = optsRef.current.jumpToFirst
+		const { first, last: edgesLast } = optsRef.current.edges;
+		let firstOutEl: HTMLElement | null = first === true
 			? els[0]
 			: null;
 
 		const sentinel = getSentinel(isWindowRootRef.current, rootRef.current!);
-		const offset = FIXED_OFFSET + optsRef.current.overlayHeight + optsRef.current.boundaryOffset.toBottom;
+		const offset = FIXED_OFFSET + optsRef.current.overlayHeight + optsRef.current.offset.toEnd;
 
 		Array.from(top).some(([_, topPos], idx) => {
-			const _firstOffset = !optsRef.current.jumpToFirst && idx === 0
-				? optsRef.current.edgeOffset.first
+			const _firstOffset = first !== true && idx === 0
+				? first
 				: 0;
 
 			if (sentinel + topPos < offset + _firstOffset) {
@@ -161,9 +163,9 @@ export function useActiveScroll(
 			return true;
 		});
 
-		if (!optsRef.current.jumpToLast && firstOutEl === last(els)) {
+		if (edgesLast !== true && firstOutEl === last(els)) {
 			const lastBottom = last(Array.from(bottom.values()));
-			if (lastBottom !== undefined && sentinel + lastBottom < offset + optsRef.current.edgeOffset.last) {
+			if (lastBottom !== undefined && sentinel + lastBottom < offset - edgesLast) {
 				setActiveEl(null);
 				return;
 			}
@@ -187,18 +189,18 @@ export function useActiveScroll(
 		if (els.length === 0)
 			return;
 
-		let firstInEl: HTMLElement | null = optsRef.current.jumpToLast
+		const { first, last: edgesLast } = optsRef.current.edges;
+		let firstInEl: HTMLElement | null = edgesLast === true
 			? last(els)!
 			: null;
 
 		const sentinel = getSentinel(isWindowRootRef.current, rootRef.current!);
-		const offset = FIXED_OFFSET + optsRef.current.overlayHeight + optsRef.current.boundaryOffset.toTop;
+		const offset = FIXED_OFFSET + optsRef.current.overlayHeight + optsRef.current.offset.toStart;
 
 		Array.from(bottom).some(([_, bottomPos], idx) => {
-			const _lastOffset
-				= !optsRef.current.jumpToLast && idx === bottom.size - 1
-					? optsRef.current.edgeOffset.last
-					: 0;
+			const _lastOffset = edgesLast !== true && idx === bottom.size - 1
+				? -edgesLast
+				: 0;
 
 			if (sentinel + bottomPos > offset + _lastOffset) {
 				firstInEl = els[idx];
@@ -207,9 +209,9 @@ export function useActiveScroll(
 			return false;
 		});
 
-		if (!optsRef.current.jumpToFirst && firstInEl === els[0]) {
+		if (first !== true && firstInEl === els[0]) {
 			const firstTop = top.values().next().value;
-			if (firstTop !== undefined && sentinel + firstTop > offset + optsRef.current.edgeOffset.first) {
+			if (firstTop !== undefined && sentinel + firstTop > offset + first) {
 				setActiveEl(null);
 				return;
 			}
@@ -319,10 +321,10 @@ export function useActiveScroll(
 	/**
 	 * 浏览器前进/后退事件处理。
 	 */
-	function onPrevNext(event: PopStateEvent): void {
-		const stateCurrent = event?.state?.current || "";
-		if (!stateCurrent.includes("#") && activeElRef.current) {
-			setActiveEl(optsRef.current.jumpToFirst ? targetsRef.current.els[0] : null);
+	function onPrevNext(): void {
+		const hash = window.location.hash;
+		if (!hash && activeElRef.current) {
+			setActiveEl(optsRef.current.edges.first === true ? targetsRef.current.els[0] : null);
 			return;
 		}
 		setFromHash();
@@ -498,17 +500,25 @@ export function useActiveScroll(
 
 	// 同步 URL hash
 	useEffect(() => {
-		if (!opts.replaceHash)
+		if (opts.hash === "off")
 			return;
 		if (typeof window === "undefined")
 			return;
 
 		const baseUrl = location.href.split("#")[0];
-		const start = opts.jumpToFirst ? 0 : -1;
+		const start = opts.edges.first === true ? 0 : -1;
 		const newHash = activeIndex > start ? `#${activeId}` : "";
 
-		history.replaceState(history.state, "", `${baseUrl}${newHash}`);
-	}, [activeId, activeIndex, opts.replaceHash, opts.jumpToFirst]);
+		// 与当前地址一致时跳过，避免多余的状态替换或重复历史记录
+		if (location.hash === newHash)
+			return;
+
+		const url = `${baseUrl}${newHash}`;
+		if (opts.hash === "push")
+			history.pushState(history.state, "", url);
+		else
+			history.replaceState(history.state, "", url);
+	}, [activeId, activeIndex, opts.hash, opts.edges.first]);
 
 	// 暴露方法
 	const setActive = useCallback((target: string | HTMLElement) => {

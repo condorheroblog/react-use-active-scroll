@@ -15,12 +15,12 @@ export function ApiShowcase() {
 
 	// 在主内容区直接消费返回值，便于在 UI 中展示。
 	const { activeId, activeIndex, activeEl, isActive, setActive } = useActiveScroll(targets, {
-		replaceHash: true,
+		hash: 'replace',
 	})
 
 	return (
 		<PageShell
-			tocData={{ menuItems, targets, replaceHash: true }}
+			tocData={{ menuItems, targets, hash: 'replace' }}
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-2xl">
