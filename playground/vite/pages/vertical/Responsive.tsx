@@ -1,12 +1,14 @@
 import { useMemo } from 'react'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
+import { PageShell } from '../PageShell'
+import { useFakeData } from '../../hooks/useFakeData'
 
 const MIN_WIDTH = 768
 
 /**
- * Responsive 页面。
+ * @zh Responsive 页面。
  * 演示 minWidth 选项：仅在视口宽度 >= 768px 时启用滚动监听。
+ * @en Responsive page.
+ * Demonstrates the minWidth option: scroll listening is enabled only when the viewport width >= 768px.
  */
 export function Responsive() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()

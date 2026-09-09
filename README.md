@@ -1,8 +1,16 @@
-![npm](https://img.shields.io/npm/v/react-use-active-scroll?color=46c119)
-
 # React Use Active Scroll
 
-[Live Demo](https://condorheroblog.github.io/react-use-active-scroll/)
+<p align="center">
+  <img src="https://condorheroblog.github.io/react-use-active-scroll/logo.svg" alt="React Use Active Scroll logo" width="96" />
+</p>
+
+[![npm version][npm-version-src]][npm-version-href]
+[![npm downloads][npm-downloads-src]][npm-downloads-href]
+[![bundle][bundle-src]][bundle-href]
+[![JSDocs][jsdocs-src]][jsdocs-href]
+[![License][license-src]][license-href]
+
+Live Demo: https://condorheroblog.github.io/react-use-active-scroll/
 
 A React hook that tracks the currently active section while scrolling. Ideal for TOC and sidebar link highlighting.
 
@@ -99,8 +107,9 @@ const byRef = targetsRef; // useful when targets mount later
 ```tsx
 export function Sidebar() {
 	const { activeId } = useActiveScroll(targets, {
+		direction: "vertical", // scroll axis: "vertical" | "horizontal"
 		root: null, // scrolling element, window root by default
-		overlayHeight: 0, // fixed overlay height in px
+		overlay: 0, // fixed overlay size along the scroll axis, in px
 		minWidth: 0, // only track when viewport width >= minWidth
 		hash: "off", // sync URL hash: "off" | "replace" | "push"
 		edges: { first: true, last: true }, // edge activation strategy
@@ -111,14 +120,15 @@ export function Sidebar() {
 }
 ```
 
-| Property      | Type                                                | Default                       | Description                                                                                                                                                                       |
-| ------------- | --------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| edges         | `Edges`                                             | `{ first: true, last: true }` | Activation strategy for the first/last target. `true` always activates the edge target once reached the top/bottom even if not intersecting. A `number` allows "no active target": the first target activates early when within that distance of the trigger line; the last target deactivates after its bottom passes the line by that distance. |
-| hash          | `'off' \| 'replace' \| 'push'`                      | `'off'`                       | Sync URL hash while scrolling. `replace` updates the current history entry, `push` creates a new one. The first target is skipped if `edges.first` is `true`.                       |
-| offset        | `number \| Offset`                                  | `{ toStart: 0, toEnd: 0 }`    | Boundary offset in px per scroll direction (`toStart` when scrolling up, `toEnd` when scrolling down). A single number applies to both. Tweak to "anticipate" or "delay" target detection. |
-| root          | `HTMLElement \| null` \| `RefObject<HTMLElement \| null>` | null                          | Scrolling element. Set it only if your content **is not scrolled** by the window. If _null_, defaults to the document root.                                                        |
-| overlayHeight | `number`                                            | 0                             | Height in px of any **CSS fixed** content overlapping the top of your scrolling area (e.g. fixed header). Must be paired with [`scroll-margin-top`](#fixed-header) on your targets.   |
-| minWidth      | `number`                                            | 0                             | Only enable listeners when the viewport is at least this wide. Useful when hiding the sidebar with `display: none` on small screens.                                               |
+| Property  | Type                                                     | Default                      | Description                                                                                                                                                                       |
+| --------- | -------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| direction | `'vertical' \| 'horizontal'`                             | `'vertical'`                 | Scroll axis to track. `'horizontal'` watches `scrollLeft` instead of `scrollTop` (RTL is not supported yet).                                                                        |
+| edges     | `Edges`                                                  | `{ first: true, last: true }` | Activation strategy for the first/last target. `true` always activates the edge target once reached the start/end even if not intersecting. A `number` allows "no active target": the first target activates early when within that distance of the trigger line; the last target deactivates after its end passes the line by that distance. |
+| hash      | `'off' \| 'replace' \| 'push'`                           | `'off'`                      | Sync URL hash while scrolling. `replace` updates the current history entry, `push` creates a new one. The first target is skipped if `edges.first` is `true`.                       |
+| offset    | `number \| Offset`                                       | `{ toStart: 0, toEnd: 0 }`   | Boundary offset in px per scroll direction (`toStart` when scrolling towards the start, `toEnd` towards the end). A single number applies to both. Tweak to "anticipate" or "delay" target detection. |
+| root      | `HTMLElement \| null` \| `RefObject<HTMLElement \| null>` | null                         | Scrolling element. Set it only if your content **is not scrolled** by the window. If _null_, defaults to the document root.                                                        |
+| overlay   | `number`                                                 | 0                            | Size in px of any **CSS fixed** content overlapping the start of your scrolling area along the scroll axis — a fixed header (vertical) or a fixed side panel (horizontal). Must be paired with `scroll-margin-top` / `scroll-margin-left` on your targets. |
+| minWidth  | `number`                                                 | 0                            | Only enable listeners when the viewport is at least this wide. Useful when hiding the sidebar with `display: none` on small screens.                                               |
 
 ## Return Value
 
@@ -157,11 +167,11 @@ export function Layout() {
 
 ### Fixed header
 
-If a fixed header overlaps the top of the scrolling area, set its height via `overlayHeight` and pair it with `scroll-margin-top` so clicked targets don't hide underneath:
+If a fixed header overlaps the top of the scrolling area, set its height via `overlay` and pair it with `scroll-margin-top` so clicked targets don't hide underneath:
 
 ```tsx
 export function Sidebar() {
-	const { activeId } = useActiveScroll(ids, { overlayHeight: 64 });
+	const { activeId } = useActiveScroll(ids, { overlay: 64 });
 
 	return <nav>{/* ... */}</nav>;
 }
@@ -170,6 +180,29 @@ export function Sidebar() {
 ```css
 h2 {
 	scroll-margin-top: 64px;
+}
+```
+
+### Horizontal scrolling
+
+Set `direction: "horizontal"` to track a horizontally scrolling container. Fixed overlays on the left use the same `overlay` option (their width), paired with `scroll-margin-left`:
+
+```tsx
+export function Sidebar() {
+	const { activeId } = useActiveScroll(ids, {
+		root: containerRef,
+		direction: "horizontal",
+	});
+
+	return <nav>{/* ... */}</nav>;
+}
+```
+
+```css
+.scroll-container {
+	display: flex;
+	overflow-x: auto;
+	scroll-behavior: smooth;
 }
 ```
 
@@ -208,3 +241,17 @@ export function Sidebar({ ids }: { ids: string[] }) {
 ## License
 
 [MIT](https://github.com/condorheroblog/react-use-active-scroll/blob/main/LICENSE) License © 2026-Present [Condor Hero](https://github.com/condorheroblog)
+
+
+<!-- Badges -->
+
+[npm-version-src]: https://img.shields.io/npm/v/react-use-active-scroll?style=flat&colorA=080f12&colorB=1fa669
+[npm-version-href]: https://npmx.dev/package/react-use-active-scroll
+[npm-downloads-src]: https://img.shields.io/npm/dm/react-use-active-scroll?style=flat&colorA=080f12&colorB=1fa669
+[npm-downloads-href]: https://npmx.dev/package/react-use-active-scroll
+[bundle-src]: https://img.shields.io/bundlephobia/minzip/react-use-active-scroll?style=flat&colorA=080f12&colorB=1fa669&label=minzip
+[bundle-href]: https://bundlephobia.com/result?p=react-use-active-scroll
+[license-src]: https://img.shields.io/github/license/condorheroblog/react-use-active-scroll.svg?style=flat&colorA=080f12&colorB=1fa669
+[license-href]: https://github.com/condorheroblog/react-use-active-scroll/blob/main/LICENSE
+[jsdocs-src]: https://img.shields.io/badge/jsdocs-reference-080f12?style=flat&colorA=080f12&colorB=1fa669
+[jsdocs-href]: https://www.jsdocs.io/package/react-use-active-scroll

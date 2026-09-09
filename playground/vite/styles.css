@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 /**
- * 设计令牌：Tailwind CSS v4 CSS-first 配置。
+ * @zh 设计令牌：Tailwind CSS v4 CSS-first 配置。
  * 使用 .dark 类覆盖实现明亮 / 暗黑主题切换。
+ * @en Design tokens: Tailwind CSS v4 CSS-first config.
+ * Implements light/dark theme switching via .dark class overrides.
  */
 @theme {
 	--color-bg: #ffffff;
@@ -30,16 +32,23 @@
 }
 
 /**
- * 基础重置与页面背景。
+ * @zh 基础重置与页面背景。
  * Tailwind 的 preflight 已处理大部分重置，这里只保留项目级字体与背景色。
+ * @en Base reset and page background.
+ * Tailwind's preflight handles most reset; here only project-level font and background color remain.
  */
 html {
 	font-family: var(--font-sans);
 	background-color: var(--color-bg);
 	color: var(--color-fg);
-	/* 跟随 --ScrollBehavior 变量（DemoControls 动态切换 smooth / auto），
-	   不能硬编码 smooth：scrollIntoView({ behavior: 'auto' }) 按规范会
-	   回退到 CSS 的计算值，硬编码会导致 auto 选项无效。 */
+	/*
+	 * @zh 跟随 --ScrollBehavior 变量（DemoControls 动态切换 smooth / auto），
+	 * 不能硬编码 smooth：scrollIntoView({ behavior: 'auto' }) 按规范会
+	 * 回退到 CSS 的计算值，硬编码会导致 auto 选项无效。
+	 * @en Follow the --ScrollBehavior variable (DemoControls toggles smooth / auto dynamically);
+	 * do not hardcode smooth: per spec scrollIntoView({ behavior: 'auto' }) falls back to the
+	 * computed CSS value, and hardcoding would make the auto option ineffective.
+	 */
 	scroll-behavior: var(--ScrollBehavior);
 }
 
@@ -52,9 +61,12 @@ body {
 }
 
 /**
- * 滚动行为由 DemoControls 根据 native / custom 点击类型与 smooth / auto
+ * @zh 滚动行为由 DemoControls 根据 native / custom 点击类型与 smooth / auto
  * 选项动态写入 --ScrollBehavior：窗口滚动作用于 <html>；
  * 容器滚动场景需给滚动容器本身加 .scroll-behavior-dynamic。
+ * @en The scroll behavior is written dynamically to --ScrollBehavior by DemoControls based on
+ * the native / custom click type and the smooth / auto option: window scrolling applies to <html>;
+ * for container scrolling, add .scroll-behavior-dynamic to the scroll container itself.
  */
 :root {
 	--ScrollBehavior: smooth;
@@ -65,7 +77,8 @@ body {
 }
 
 /**
- * 自定义滚动条，保持极简风格。
+ * @zh 自定义滚动条，保持极简风格。
+ * @en Custom scrollbar for a minimal style.
  */
 ::-webkit-scrollbar {
 	width: 6px;

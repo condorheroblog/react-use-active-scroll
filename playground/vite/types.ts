@@ -1,5 +1,6 @@
 /**
- * 演示应用自身类型定义。
+ * @zh 演示应用自身类型定义。
+ * @en Type definitions for the demo app itself.
  */
 
 export interface Section {
@@ -26,29 +27,34 @@ export interface DemoButtons {
 }
 
 /**
- * 传递给核心包 useActiveScroll 的演示配置。
+ * @zh 传递给核心包 useActiveScroll 的演示配置。
  * 包含所有选项，页面按需透传。
+ * @en Demo config passed to the core useActiveScroll.
+ * Contains all options; pages pass them through as needed.
  */
 export interface TOCData {
 	menuItems: MenuItem[]
-	/** 演示应用透传给核心包 useActiveScroll 的目标集合 */
+	/** @zh 演示应用透传给核心包 useActiveScroll 的目标集合 @en Targets passed through to the core useActiveScroll by the demo */
 	targets: string[] | HTMLElement[]
-	/** 容器滚动场景下，演示应用持有的容器 ref */
+	/** @zh 容器滚动场景下，演示应用持有的容器 ref @en Container ref held by the demo for container-scroll scenarios */
 	containerRef?: React.RefObject<HTMLElement | null>
-	/** 固定头部场景下，演示应用通过 options 透传的核心包配置 */
-	overlayHeight?: number
-	/** URL hash 同步方式 */
+	/** @zh 滚动方向，透传给核心包 direction 选项 @en Scroll direction, passed through to the core direction option */
+	direction?: 'vertical' | 'horizontal'
+	/** @zh 沿滚动轴起点一侧固定遮挡物尺寸，透传给核心包 overlay 选项 @en Size of the fixed overlay on the start side of the scroll axis, passed to the core overlay option */
+	overlay?: number
+	/** @zh URL hash 同步方式 @en URL hash sync mode */
 	hash?: 'off' | 'replace' | 'push'
-	/** 边缘目标（首个/末个）的激活策略 */
+	/** @zh 边缘目标（首个/末个）的激活策略 @en Activation strategy for edge targets (first/last) */
 	edges?: { first?: boolean | number; last?: boolean | number }
-	/** 仅在视口宽度大于等于此值时启用监听 */
+	/** @zh 仅在视口宽度大于等于此值时启用监听 @en Enable listeners only when the viewport width is greater than or equal to this value */
 	minWidth?: number
-	/** 滚动边界偏移，数字形式同时应用于两个方向 */
+	/** @zh 滚动边界偏移，数字形式同时应用于两个方向 @en Scroll boundary offset; a number applies to both directions */
 	offset?: number | { toStart?: number; toEnd?: number }
 }
 
 /**
- * EdgeBoundary 页面使用的本地偏移状态。
+ * @zh EdgeBoundary 页面使用的本地偏移状态。
+ * @en Local offset state used by the EdgeBoundary page.
  */
 export interface EdgeBoundaryOptions {
 	edgeFirst: number
@@ -58,7 +64,8 @@ export interface EdgeBoundaryOptions {
 }
 
 /**
- * Edges 页面使用的本地开关状态。
+ * @zh Edges 页面使用的本地开关状态。
+ * @en Local toggle state used by the Edges page.
  */
 export interface EdgesOptions {
 	first: boolean

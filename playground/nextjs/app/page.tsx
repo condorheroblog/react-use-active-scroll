@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-// 通过 next.config.js / tsconfig paths 映射到本地源码。
+// @zh 通过 next.config.js / tsconfig paths 映射到本地源码。
+// @en Mapped to local source via next.config.js / tsconfig paths.
 import { useActiveScroll } from "react-use-active-scroll";
 
 const sections = Array.from({ length: 8 }, (_, index) => ({
@@ -10,8 +11,11 @@ const sections = Array.from({ length: 8 }, (_, index) => ({
 }));
 
 /**
- * Next.js App Router 客户端页面示例。
+ * @zh Next.js App Router 客户端页面示例。
  * 展示如何在带滚动容器的布局中使用 useActiveScroll 驱动目录高亮与 hash 同步。
+ * @en Next.js App Router client page example.
+ * Shows how to use useActiveScroll in a layout with a scroll container to drive
+ * TOC highlighting and hash sync.
  */
 export default function HomePage() {
 	const containerRef = useRef<HTMLDivElement>(null);

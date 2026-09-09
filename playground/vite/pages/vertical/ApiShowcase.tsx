@@ -1,19 +1,24 @@
 import { useMemo } from 'react'
 import { useActiveScroll } from 'react-use-active-scroll'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
+import { PageShell } from '../PageShell'
+import { useFakeData } from '../../hooks/useFakeData'
 
 /**
- * ApiShowcase 页面。
+ * @zh ApiShowcase 页面。
  * 集中展示 useActiveScroll 所有返回值：
  * - activeId、activeIndex、activeEl（DOM 引用）
  * - isActive、setActive
+ * @en ApiShowcase page.
+ * Showcases all return values of useActiveScroll:
+ * - activeId, activeIndex, activeEl (DOM reference)
+ * - isActive, setActive
  */
 export function ApiShowcase() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
 
-	// 在主内容区直接消费返回值，便于在 UI 中展示。
+	// @zh 在主内容区直接消费返回值，便于在 UI 中展示。
+	// @en Consume the return values directly in the main content area so they can be shown in the UI.
 	const { activeId, activeIndex, activeEl, isActive, setActive } = useActiveScroll(targets, {
 		hash: 'replace',
 	})
@@ -24,7 +29,7 @@ export function ApiShowcase() {
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-2xl">
-				{/* 返回值展示面板 */}
+				{/* @zh 返回值展示面板 @en Return-value display panel */}
 				<div className="mb-8 rounded-md border border-border bg-card p-4 text-sm">
 					<div className="mb-2 font-medium text-fg">Return Values</div>
 					<div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -47,7 +52,7 @@ export function ApiShowcase() {
 					</div>
 				</div>
 
-				{/* setActive 快捷跳转按钮 */}
+				{/* @zh setActive 快捷跳转按钮 @en setActive quick-jump buttons */}
 				<div className="mb-8 flex flex-wrap gap-2">
 					{sections.slice(0, 4).map(section => (
 						<button
@@ -61,7 +66,7 @@ export function ApiShowcase() {
 					))}
 				</div>
 
-				{/* 内容区：isActive 给当前激活的 section 加上边框高亮 */}
+				{/* @zh 内容区：isActive 给当前激活的 section 加上边框高亮 @en Content area: isActive adds a border highlight to the currently active section */}
 				<div className="space-y-16">
 					{sections.map(section => (
 						<section

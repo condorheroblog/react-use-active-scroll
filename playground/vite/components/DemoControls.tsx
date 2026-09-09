@@ -3,9 +3,12 @@ import { DemoRadiosContext } from '../App'
 import { DemoButtonsContext } from '../pages/PageShell'
 
 /**
- * 全局演示控制面板。
+ * @zh 全局演示控制面板。
  * 控制点击滚动类型（native / custom）与原生滚动行为（smooth / auto），
  * 并提供 Shift / Push 按钮演示目标集合的动态变化。
+ * @en Global demo control panel.
+ * Controls the click-scroll type (native / custom) and native scroll behavior (smooth / auto),
+ * and provides Shift / Push buttons to demo dynamic changes to the target set.
  */
 export function DemoControls() {
 	const radios = useContext(DemoRadiosContext)
@@ -15,8 +18,10 @@ export function DemoControls() {
 	const { scrollBehavior, setScrollBehavior, clickType, setClickType } = radios
 	const { shiftSection, pushSection } = buttons
 
-	// native 模式由 CSS scroll-behavior 控制；custom 模式由 JS 动画库接管，
+	// @zh native 模式由 CSS scroll-behavior 控制；custom 模式由 JS 动画库接管，
 	// 因此容器滚动场景需要把 scroll-behavior 设为 auto，避免与 JS 动画冲突。
+	// @en In native mode CSS scroll-behavior controls scrolling; in custom mode the JS animation
+	// library takes over, so container-scroll scenarios set scroll-behavior to auto to avoid conflicting with JS animation.
 	useEffect(() => {
 		document.documentElement.style.setProperty(
 			'--ScrollBehavior',

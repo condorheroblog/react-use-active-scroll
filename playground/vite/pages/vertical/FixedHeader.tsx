@@ -1,13 +1,16 @@
 import { useMemo } from 'react'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
+import { PageShell } from '../PageShell'
+import { useFakeData } from '../../hooks/useFakeData'
 
 const HEADER_HEIGHT = 60
 
 /**
- * FixedHeader 页面。
- * 演示 overlayHeight 选项：页面顶部有一个固定占位条，
+ * @zh FixedHeader 页面。
+ * 演示 overlay 选项：页面顶部有一个固定占位条，
  * 核心包会把它的占用空间计入激活判定阈值。
+ * @en FixedHeader page.
+ * Demonstrates the overlay option: there is a fixed placeholder bar at the top of the page,
+ * and the core package counts its occupied space into the activation-detection threshold.
  */
 export function FixedHeader() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
@@ -15,20 +18,20 @@ export function FixedHeader() {
 
 	return (
 		<PageShell
-			tocData={{ menuItems, targets, overlayHeight: HEADER_HEIGHT }}
+			tocData={{ menuItems, targets, overlay: HEADER_HEIGHT }}
 			demoButtons={{ pushSection, shiftSection }}
 		>
-			{/* 固定占位条，模拟被固定头部遮挡的区域 */}
+			{/* @zh 固定占位条，模拟被固定头部遮挡的区域 @en Fixed placeholder bar, simulating the area obscured by a fixed header */}
 			<div
 				className="fixed left-0 right-0 top-0 z-40 flex items-center border-b border-border bg-card px-6 text-sm font-medium text-fg"
 				style={{ height: HEADER_HEIGHT }}
 			>
-				Fixed Header (overlayHeight: {HEADER_HEIGHT}px)
+				Fixed Header (overlay: {HEADER_HEIGHT}px)
 			</div>
 
 			<div className="mx-auto max-w-2xl pt-24">
 				<p className="mb-8 text-sm text-muted">
-					顶部固定条高度为 {HEADER_HEIGHT}px，核心包通过 overlayHeight 选项将其纳入激活阈值计算。
+					顶部固定条高度为 {HEADER_HEIGHT}px，核心包通过 overlay 选项将其纳入激活阈值计算。
 				</p>
 
 				<div className="space-y-16">

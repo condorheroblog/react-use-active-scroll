@@ -5,34 +5,45 @@ import { Sidebar } from './Sidebar'
 interface PageLayoutProps {
 	children: React.ReactNode
 	extraControls?: React.ReactNode
+	/** @zh 窗口横向滚动场景：侧边栏改为 fixed，避免随文档横向滚出视口 @en Window horizontal-scroll scenario: make the sidebar fixed so it does not scroll out of the viewport horizontally */
+	fixedSidebar?: boolean
 }
 
 /**
- * 页面公共布局。
- * - PC：右侧 sticky 目录侧边栏。
+ * @zh 页面公共布局。
+ * - PC：右侧 sticky 目录侧边栏（窗口横向滚动场景为 fixed）。
  * - 移动端（< md）：侧边栏隐藏，点击悬浮按钮从右侧滑出抽屉。
+ * @en Shared page layout.
+ * - PC: a sticky TOC sidebar on the right (fixed in the window horizontal-scroll scenario).
+ * - Mobile (< md): the sidebar is hidden; a floating button slides out a drawer from the right.
  */
-export function PageLayout({ children, extraControls }: PageLayoutProps) {
+export function PageLayout({ children, extraControls, fixedSidebar }: PageLayoutProps) {
 	const [drawerOpen, setDrawerOpen] = useState(false)
 
 	return (
 		<div className="relative mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-[1fr_220px]">
-			{/* 主内容区 */}
+			{/* @zh 主内容区 @en Main content area */}
 			<div className="min-w-0 px-4 pb-20 pt-8 md:px-8">
 				{children}
 			</div>
 
-			{/* 桌面端侧边栏 */}
+			{/* @zh 桌面端侧边栏：窗口横向滚动场景 fixed 常驻，否则 sticky 跟随 @en Desktop sidebar: fixed and persistent in the window horizontal-scroll scenario, otherwise sticky */}
 			<aside className="hidden md:block">
-				<div className="sticky top-20 space-y-6">
-					<Sidebar extraControls={extraControls} />
-				</div>
+				{fixedSidebar ? (
+					<div className="fixed top-20 right-4 z-40 w-[220px] space-y-6">
+						<Sidebar extraControls={extraControls} />
+					</div>
+				) : (
+					<div className="sticky top-20 space-y-6">
+						<Sidebar extraControls={extraControls} />
+					</div>
+				)}
 			</aside>
 
-			{/* 激活阈值参考线（容器内场景自行渲染，此处跳过） */}
+			{/* @zh 激活阈值参考线（容器内场景自行渲染，此处跳过） @en Activation threshold reference line (rendered separately for in-container scenarios; skipped here) */}
 			<ScanLine />
 
-			{/* 移动端悬浮目录按钮 */}
+			{/* @zh 移动端悬浮目录按钮 @en Mobile floating TOC button */}
 			<button
 				type="button"
 				onClick={() => setDrawerOpen(true)}
@@ -42,7 +53,7 @@ export function PageLayout({ children, extraControls }: PageLayoutProps) {
 				<MenuIcon />
 			</button>
 
-			{/* 移动端目录抽屉 */}
+			{/* @zh 移动端目录抽屉 @en Mobile TOC drawer */}
 			{drawerOpen && (
 				<>
 					<div

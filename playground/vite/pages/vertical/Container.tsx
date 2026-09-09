@@ -1,11 +1,14 @@
 import { useMemo, useRef } from 'react'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
+import { PageShell } from '../PageShell'
+import { useFakeData } from '../../hooks/useFakeData'
 
 /**
- * Container 页面。
+ * @zh Container 页面。
  * 演示自定义滚动容器 root（传入 RefObject）。
  * 容器限定高度，window 不滚动，内部渲染自己的激活阈值参考线。
+ * @en Container page.
+ * Demonstrates a custom scroll container root (passing a RefObject).
+ * The container has a fixed height so the window does not scroll, and it renders its own activation-threshold reference line inside.
  */
 export function Container() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
@@ -22,13 +25,17 @@ export function Container() {
 					本页面滚动发生在下方容器内部，window 本身不滚动。root 选项指向容器 ref。
 				</p>
 
-				{/* scroll-behavior-dynamic：跟随 --ScrollBehavior 变量，
-				    由 DemoControls 在 native(custom/smooth/auto) 间切换 */}
+				{/*
+					@zh scroll-behavior-dynamic：跟随 --ScrollBehavior 变量，
+					由 DemoControls 在 native(custom/smooth/auto) 间切换。
+					@en scroll-behavior-dynamic: follows the --ScrollBehavior variable,
+					toggled by DemoControls between native (custom/smooth/auto).
+				*/}
 				<div
 					ref={containerRef}
 					className="scroll-behavior-dynamic h-[70vh] max-h-[600px] overflow-auto rounded-md border border-border p-6"
 				>
-					{/* 容器内激活阈值参考线 */}
+					{/* @zh 容器内激活阈值参考线 @en In-container activation-threshold reference line */}
 					<div className="sticky top-2 z-10 border-t border-dashed border-accent">
 						<div className="flex justify-end">
 							<span className="-translate-y-1/2 rounded-sm border border-dashed border-accent bg-bg px-1.5 py-0.5 text-[10px] text-accent">

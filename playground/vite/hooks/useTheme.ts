@@ -1,15 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
 
 /**
- * 主题类型：跟随系统、明亮、暗黑。
+ * @zh 主题类型：跟随系统、明亮、暗黑。
+ * @en Theme type: follow system, light, or dark.
  */
 type Theme = "system" | "light" | "dark"
 
 const STORAGE_KEY = "react-use-active-scroll-theme"
 
 /**
- * 解析最终应应用到 <html> 的类名。
+ * @zh 解析最终应应用到 <html> 的类名。
  * system 模式根据 prefers-color-scheme 决定。
+ * @en Resolves the class name ultimately applied to <html>.
+ * In system mode it follows prefers-color-scheme.
  */
 function resolveClass(theme: Theme): "light" | "dark" {
 	if (theme === "system") {
@@ -20,8 +23,10 @@ function resolveClass(theme: Theme): "light" | "dark" {
 }
 
 /**
- * 提供主题状态与切换方法。
+ * @zh 提供主题状态与切换方法。
  * 主题类名会同步到 <html>，并持久化到 localStorage。
+ * @en Provides theme state and toggle methods.
+ * The theme class name is synced to <html> and persisted to localStorage.
  */
 export function useTheme(): { theme: Theme; setTheme: (theme: Theme) => void; toggleTheme: () => void } {
 	const [theme, setThemeState] = useState<Theme>(() => {
@@ -39,7 +44,8 @@ export function useTheme(): { theme: Theme; setTheme: (theme: Theme) => void; to
 		apply(theme)
 	}, [apply, theme])
 
-	// 监听系统主题变化，system 模式下自动切换
+	// @zh 监听系统主题变化，system 模式下自动切换
+	// @en Listen for system theme changes; auto-switch in system mode
 	useEffect(() => {
 		if (theme !== "system") return
 		const media = window.matchMedia("(prefers-color-scheme: dark)")

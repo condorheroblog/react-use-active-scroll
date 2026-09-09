@@ -1,19 +1,24 @@
 import { useMemo } from 'react'
 import { useActiveScroll } from 'react-use-active-scroll'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
+import { PageShell } from '../PageShell'
+import { useFakeData } from '../../hooks/useFakeData'
 
 /**
- * Basic 页面。
- * 演示默认 window/document 根滚动、hash: 'replace'，
+ * @zh Window 页面。
+ * 演示针对浏览器窗口的纵向滚动（root 缺省即窗口）、hash: 'replace'，
  * 并在顶部实时展示 activeId / activeIndex / isActive 等返回值。
+ * @en Window page.
+ * Demonstrates vertical scrolling against the browser window (root defaults to the window) with hash: 'replace',
+ * and shows return values such as activeId / activeIndex / isActive live at the top.
  */
-export function Basic() {
+export function Window() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
 
-	// 本页直接在主内容区消费返回值，便于可视化展示。
-	// hash 同步由目录组件统一处理，避免重复更新 URL。
+	// @zh 本页直接在主内容区消费返回值，便于可视化展示。
+	// @en This page consumes the return values directly in the main content area for visual display.
+	// @zh hash 同步由目录组件统一处理，避免重复更新 URL。
+	// @en Hash sync is handled uniformly by the TOC component to avoid repeatedly updating the URL.
 	const { activeId, activeIndex, isActive } = useActiveScroll(targets)
 
 	return (
@@ -22,7 +27,7 @@ export function Basic() {
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-2xl">
-				{/* 返回值展示面板 */}
+				{/* @zh 返回值展示面板 @en Return-value display panel */}
 				<div className="mb-8 rounded-md border border-border bg-card p-4 text-sm">
 					<div className="mb-2 font-medium text-fg">Return Values</div>
 					<div className="grid grid-cols-2 gap-2 text-muted sm:grid-cols-4">
@@ -45,7 +50,7 @@ export function Basic() {
 					</div>
 				</div>
 
-				{/* 内容区 */}
+				{/* @zh 内容区 @en Content area */}
 				<div className="space-y-16">
 					{sections.map(section => (
 						<section key={section.id} className="scroll-mt-24">

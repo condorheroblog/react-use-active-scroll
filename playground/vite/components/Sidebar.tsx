@@ -6,8 +6,10 @@ interface SidebarProps {
 }
 
 /**
- * 目录侧边栏内容。
+ * @zh 目录侧边栏内容。
  * 同时用于桌面端侧边栏与移动端抽屉内部。
+ * @en TOC sidebar content.
+ * Used both for the desktop sidebar and inside the mobile drawer.
  */
 export function Sidebar({ extraControls }: SidebarProps) {
 	return (

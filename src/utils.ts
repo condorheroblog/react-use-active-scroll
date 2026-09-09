@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions } from "./types";
+import type { Direction, ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions } from "./types";
 
 export const FIXED_OFFSET = 10;
 export const SCROLLBAR_WIDTH = 17;
@@ -7,16 +7,18 @@ export const IDLE_FRAMES = 20;
 export const MOUNT_IDLE_FRAMES = 10;
 
 export const defaultOptions: ResolvedOptions = {
+	direction: "vertical",
 	root: null,
 	edges: { first: true, last: true },
-	overlayHeight: 0,
+	overlay: 0,
 	minWidth: 0,
 	hash: "off",
 	offset: { toStart: 0, toEnd: 0 },
 };
 
 /**
- * 解析用户传入的 targets，统一转换为 HTMLElement 数组。
+ * @zh 解析用户传入的 targets，统一转换为 HTMLElement 数组。
+ * @en Resolves user-provided targets into a uniform HTMLElement array.
  */
 export function resolveTargets(userTargets: Targets): HTMLElement[] {
 	if (!Array.isArray(userTargets)) {
@@ -39,21 +41,25 @@ export function resolveTargets(userTargets: Targets): HTMLElement[] {
 }
 
 /**
- * 取数组最后一项。
+ * @zh 取数组最后一项。
+ * @en Returns the last item of an array.
  */
 export function last<T>(arr: T[]): T | undefined {
 	return arr[arr.length - 1];
 }
 
 /**
- * 判断目标集合是否为 Ref 对象。
+ * @zh 判断目标集合是否为 Ref 对象。
+ * @en Checks whether the target collection is a Ref object.
  */
 export function isRefObject(value: Targets): value is RefObject<string[] | HTMLElement[] | null> {
 	return value !== null && typeof value === "object" && "current" in value;
 }
 
 /**
- * 归一化边缘策略：true 保持强制激活；数字原样保留；false 视为 0（无提前量）。
+ * @zh 归一化边缘策略：true 保持强制激活；数字原样保留；false 视为 0（无提前量）。
+ * @en Normalizes the edge strategy: true keeps forced activation; numbers are
+ * kept as-is; false is treated as 0 (no lead distance).
  */
 function resolveEdge(value: boolean | number | undefined, fallback: true | number): true | number {
 	if (value === undefined)
@@ -64,18 +70,23 @@ function resolveEdge(value: boolean | number | undefined, fallback: true | numbe
 }
 
 /**
- * 将用户选项与默认值合并为完整配置。
+ * @zh 将用户选项与默认值合并为完整配置。
  * 注意：必须逐字段使用 ?? 合并，浅展开（...options）会让显式传入的
  * undefined 覆盖默认值，例如 minWidth: undefined 会生成非法媒体查询。
+ * @en Merges user options with defaults into a full config.
+ * Note: each field must be merged with ??; a shallow spread (...options)
+ * would let an explicitly passed undefined override the default — e.g.
+ * minWidth: undefined produces an invalid media query.
  */
 export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOptions {
 	return {
+		direction: options.direction ?? defaultOptions.direction,
 		root: options.root ?? defaultOptions.root,
 		edges: {
 			first: resolveEdge(options.edges?.first, defaultOptions.edges.first),
 			last: resolveEdge(options.edges?.last, defaultOptions.edges.last),
 		},
-		overlayHeight: options.overlayHeight ?? defaultOptions.overlayHeight,
+		overlay: options.overlay ?? defaultOptions.overlay,
 		minWidth: options.minWidth ?? defaultOptions.minWidth,
 		hash: options.hash ?? defaultOptions.hash,
 		offset: typeof options.offset === "number"
@@ -88,55 +99,87 @@ export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOp
 }
 
 /**
- * 获取当前滚动位置。
+ * @zh 获取当前滚动位置（沿滚动轴）。
+ * @en Gets the current scroll position (along the scroll axis).
  */
-export function getCurrentY(isWindowRoot: boolean, rootEl: HTMLElement): number {
+export function getCurrentPos(direction: Direction, isWindowRoot: boolean, rootEl: HTMLElement): number {
+	if (direction === "horizontal") {
+		return isWindowRoot ? window.scrollX : rootEl.scrollLeft;
+	}
 	return isWindowRoot ? window.scrollY : rootEl.scrollTop;
 }
 
 /**
- * 获取哨兵值，即视口顶部相对于文档的位置。
+ * @zh 获取哨兵值，即视口沿滚动轴的起点边缘相对于滚动内容的偏移。
+ * @en Gets the sentinel value: the offset of the viewport's start edge along
+ * the scroll axis, relative to the scroll content.
  */
-export function getSentinel(isWindowRoot: boolean, rootEl: HTMLElement): number {
+export function getSentinel(direction: Direction, isWindowRoot: boolean, rootEl: HTMLElement): number {
+	if (direction === "horizontal") {
+		return isWindowRoot
+			? rootEl.getBoundingClientRect().left
+			: -rootEl.scrollLeft;
+	}
 	return isWindowRoot
 		? rootEl.getBoundingClientRect().top
 		: -rootEl.scrollTop;
 }
 
 /**
- * 检测滚动容器是否到达顶部或底部边界。
+ * @zh 检测滚动容器是否到达滚动起点或终点边界。
+ * @en Detects whether the scroll container has reached the start or end
+ * boundary.
  */
-export function getEdges(rootEl: HTMLElement, isWindowRoot: boolean): { isTop: boolean, isBottom: boolean } {
+export function getEdges(direction: Direction, rootEl: HTMLElement, isWindowRoot: boolean): { isStart: boolean, isEnd: boolean } {
+	if (direction === "horizontal") {
+		const clientWidth = isWindowRoot ? window.innerWidth : rootEl.clientWidth;
+		const isStart = rootEl.scrollLeft <= FIXED_OFFSET * 2;
+		const isEnd = Math.abs(rootEl.scrollWidth - clientWidth - rootEl.scrollLeft) <= 1;
+		return { isStart, isEnd };
+	}
+
 	const clientHeight = isWindowRoot ? window.innerHeight : rootEl.clientHeight;
-	const isTop = rootEl.scrollTop <= FIXED_OFFSET * 2;
-	const isBottom = Math.abs(rootEl.scrollHeight - clientHeight - rootEl.scrollTop) <= 1;
-	return { isTop, isBottom };
+	const isStart = rootEl.scrollTop <= FIXED_OFFSET * 2;
+	const isEnd = Math.abs(rootEl.scrollHeight - clientHeight - rootEl.scrollTop) <= 1;
+	return { isStart, isEnd };
 }
 
 /**
- * 缓存目标元素及其相对于滚动根的位置。
+ * @zh 缓存目标元素及其相对于滚动根的位置（沿滚动轴）。
+ * @en Caches target elements and their positions relative to the scroll root
+ * (along the scroll axis).
  */
 export function prepareTargets(
 	userTargets: Targets,
 	rootEl: HTMLElement,
 	isWindowRoot: boolean,
 	targetsRef: RefObject<TargetsCache>,
+	direction: Direction = "vertical",
 ): void {
 	const _targets: HTMLElement[] = resolveTargets(userTargets);
+	const horizontal = direction === "horizontal";
 
-	_targets.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+	_targets.sort((a, b) => {
+		const aPos = horizontal ? a.getBoundingClientRect().left : a.getBoundingClientRect().top;
+		const bPos = horizontal ? b.getBoundingClientRect().left : b.getBoundingClientRect().top;
+		return aPos - bPos;
+	});
 
 	targetsRef.current.els = _targets;
 
-	const rootTop = rootEl.getBoundingClientRect().top - (isWindowRoot ? 0 : rootEl.scrollTop);
+	const rootRect = rootEl.getBoundingClientRect();
+	const rootScroll = horizontal ? rootEl.scrollLeft : rootEl.scrollTop;
+	const rootStart = (horizontal ? rootRect.left : rootRect.top) - (isWindowRoot ? 0 : rootScroll);
 
-	targetsRef.current.top.clear();
-	targetsRef.current.bottom.clear();
+	targetsRef.current.start.clear();
+	targetsRef.current.end.clear();
 
 	_targets.forEach((target) => {
-		const { top, bottom } = target.getBoundingClientRect();
+		const rect = target.getBoundingClientRect();
+		const startPos = horizontal ? rect.left : rect.top;
+		const endPos = horizontal ? rect.right : rect.bottom;
 		const id = target.id || Math.random().toString(36).slice(2, 11);
-		targetsRef.current.top.set(id, top - rootTop);
-		targetsRef.current.bottom.set(id, bottom - rootTop);
+		targetsRef.current.start.set(id, startPos - rootStart);
+		targetsRef.current.end.set(id, endPos - rootStart);
 	});
 }

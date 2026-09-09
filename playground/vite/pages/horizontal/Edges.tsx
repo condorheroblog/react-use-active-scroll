@@ -1,16 +1,22 @@
-import { useMemo, useState } from 'react'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
-import type { EdgesOptions } from '../types'
+import { useMemo, useRef, useState } from 'react'
+import { PageShell } from '../PageShell'
+import { HorizontalSections } from '../../components/HorizontalSections'
+import { useFakeData } from '../../hooks/useFakeData'
+import type { EdgesOptions } from '../../types'
 
 /**
- * Edges 页面。
- * 演示 edges.first 与 edges.last 开关：
- * true 时到达顶部/底部始终强制激活第一个 / 最后一个目标；
+ * @zh 横向 Edges 页面。
+ * 演示 edges.first 与 edges.last 开关在横向滚动下的行为：
+ * true 时到达容器最左 / 最右始终强制激活第一个 / 最后一个目标；
  * 关闭后允许"无激活"，首尾目标按普通触发线判定。
+ * @en Horizontal Edges page.
+ * Demonstrates the behavior of the edges.first and edges.last switches under horizontal scrolling:
+ * when true, reaching the far left/far right of the container always forces the first/last target to be active;
+ * when disabled, "no active" is allowed and the first/last targets are judged by the normal trigger line.
  */
 export function Edges() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
+	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
 
 	const [options, setOptions] = useState<EdgesOptions>({
@@ -41,26 +47,20 @@ export function Edges() {
 			tocData={{
 				menuItems,
 				targets,
+				containerRef,
+				direction: 'horizontal',
 				edges: { first: options.first, last: options.last },
 			}}
 			demoButtons={{ pushSection, shiftSection }}
 			extraControls={extraControls}
 		>
-			<div className="mx-auto max-w-2xl">
-				<p className="mb-8 text-sm text-muted">
-					切换 edges.first / edges.last，滚动到页面最顶部或最底部，观察首尾 section 是否被强制激活。
+			<div className="mx-auto max-w-4xl">
+				<p className="mb-4 text-sm text-muted">
+					切换 edges.first / edges.last，将容器滚动到最左或最右，观察首尾 section 是否被强制激活；
+					关闭后首尾目标按普通触发线判定，允许出现"无激活"状态。
 				</p>
 
-				<div className="space-y-16">
-					{sections.map(section => (
-						<section key={section.id} className="scroll-mt-24">
-							<h2 id={section.id} className="mb-4 text-2xl font-semibold text-fg">
-								{section.title}
-							</h2>
-							<p className="leading-relaxed text-muted">{section.text}</p>
-						</section>
-					))}
-				</div>
+				<HorizontalSections sections={sections} containerRef={containerRef} triggerLine />
 			</div>
 		</PageShell>
 	)

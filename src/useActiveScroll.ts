@@ -3,7 +3,7 @@ import type { ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions, Us
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import {
 	FIXED_OFFSET,
-	getCurrentY,
+	getCurrentPos,
 	getEdges,
 	getSentinel,
 	IDLE_FRAMES,
@@ -16,29 +16,38 @@ import {
 } from "./utils";
 
 /**
- * 滚动激活 Hook。
+ * @zh 滚动激活 Hook。
  *
  * 根据滚动位置自动判定当前应高亮的目标元素，
  * 不执行滚动也不修改 DOM，只输出激活状态供上层 UI 消费。
+ * @en Scroll-activation hook.
+ *
+ * Automatically determines which target element should be highlighted based
+ * on the scroll position; it does not scroll or modify the DOM, and only
+ * outputs the active state for the upper UI to consume.
  */
 export function useActiveScroll(
 	userTargets: Targets,
 	options: UseActiveScrollOptions = {},
 ): UseActiveScrollReturn {
-	// 合并配置，并通过 ref 保证事件回调内始终读到最新配置
+	// @zh 合并配置，并通过 ref 保证事件回调内始终读到最新配置
+	// @en Merge options; a ref ensures event callbacks always read the latest config
 	const opts = useMemo(() => resolveOptions(options), [options]);
 	const optsRef = useRef<ResolvedOptions>(opts);
 	optsRef.current = opts;
 
-	// 目标集合 ref，方便在事件回调中读取最新值
+	// @zh 目标集合 ref，方便在事件回调中读取最新值
+	// @en Ref for the target collection, so callbacks can read the latest value
 	const userTargetsRef = useRef<Targets>(userTargets);
 	userTargetsRef.current = userTargets;
 
-	// 需要触发重渲染的内部状态
+	// @zh 需要触发重渲染的内部状态
+	// @en Internal state that triggers re-renders
 	const [activeEl, setActiveElState] = useState<HTMLElement | null>(null);
 	const [isScrollIdle, setIsScrollIdle] = useState(false);
 	const [isScrollFromTarget, setIsScrollFromTarget] = useState(false);
-	// 使用 useSyncExternalStore 同步 matchMedia 状态，避免在 useEffect 中直接 setState
+	// @zh 使用 useSyncExternalStore 同步 matchMedia 状态，避免在 useEffect 中直接 setState
+	// @en Sync matchMedia state via useSyncExternalStore to avoid calling setState directly in useEffect
 	const mql = useMemo(() => {
 		if (typeof window === "undefined")
 			return null;
@@ -59,31 +68,35 @@ export function useActiveScroll(
 		() => false,
 	);
 
-	// 用 ref 镜像 activeEl，供未在依赖列表中的事件监听器读取最新值
+	// @zh 用 ref 镜像 activeEl，供未在依赖列表中的事件监听器读取最新值
+	// @en Mirror activeEl in a ref so listeners missing from the dependency array read the latest value
 	const activeElRef = useRef<HTMLElement | null>(activeEl);
 	activeElRef.current = activeEl;
 
-	// 稳定的状态设置函数，避免暴露的 callback 引用变化
+	// @zh 稳定的状态设置函数，避免暴露的 callback 引用变化
+	// @en Stable state setter to keep the exposed callback reference unchanged
 	const setActiveEl = useCallback((el: HTMLElement | null) => {
 		activeElRef.current = el;
 		setActiveElState(el);
 	}, []);
 
-	// 不触发重渲染的内部缓存
+	// @zh 不触发重渲染的内部缓存
+	// @en Internal caches that do not trigger re-renders
 	const rootRef = useRef<HTMLElement | null>(null);
 	const isWindowRootRef = useRef(false);
 	const targetsRef = useRef<TargetsCache>({
 		els: [],
-		top: new Map(),
-		bottom: new Map(),
+		start: new Map(),
+		end: new Map(),
 	});
-	const prevScrollYRef = useRef(0);
-	const clickStartYRef = useRef(0);
+	const prevScrollPosRef = useRef(0);
+	const clickStartPosRef = useRef(0);
 	const resizeObserverRef = useRef<ResizeObserver | null>(null);
 	const skipObserverCallbackRef = useRef(true);
 	const idleRafRef = useRef<number | null>(null);
 
-	// 派生返回值
+	// @zh 派生返回值
+	// @en Derived return values
 	const activeId = useMemo(() => activeEl?.id || "", [activeEl]);
 	const activeIndex = useMemo(
 		() => targetsRef.current.els.indexOf(activeEl as HTMLElement),
@@ -91,7 +104,8 @@ export function useActiveScroll(
 	);
 
 	/**
-	 * 根据 URL hash 设置初始激活目标。
+	 * @zh 根据 URL hash 设置初始激活目标。
+	 * @en Sets the initial active target based on the URL hash.
 	 */
 	function setFromHash(): boolean {
 		if (typeof window === "undefined")
@@ -111,7 +125,9 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 到达顶部/底部边界时强制激活首尾目标。
+	 * @zh 到达滚动起点/终点边界时强制激活首尾目标。
+	 * @en Forces activation of the first/last target when the scroll
+	 * start/end boundary is reached.
 	 */
 	function onEdgeReached(): boolean {
 		const { first, last: edgesLast } = optsRef.current.edges;
@@ -120,14 +136,14 @@ export function useActiveScroll(
 		if (!rootRef.current)
 			return false;
 
-		const { isTop, isBottom } = getEdges(rootRef.current, isWindowRootRef.current);
+		const { isStart, isEnd } = getEdges(optsRef.current.direction, rootRef.current, isWindowRootRef.current);
 
-		if (first === true && isTop) {
+		if (first === true && isStart) {
 			setActiveEl(targetsRef.current.els[0] || null);
 			return true;
 		}
 
-		if (edgesLast === true && isBottom) {
+		if (edgesLast === true && isEnd) {
 			setActiveEl(last(targetsRef.current.els) || null);
 			return true;
 		}
@@ -136,10 +152,11 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 向下滚动时的激活判定。
+	 * @zh 朝滚动终点方向滚动时的激活判定。
+	 * @en Activation logic when scrolling toward the scroll end.
 	 */
-	function onScrollDown(isScrollCancel = false): void {
-		const { els, top, bottom } = targetsRef.current;
+	function onScrollToEnd(isScrollCancel = false): void {
+		const { els, start, end } = targetsRef.current;
 		if (els.length === 0)
 			return;
 
@@ -148,15 +165,15 @@ export function useActiveScroll(
 			? els[0]
 			: null;
 
-		const sentinel = getSentinel(isWindowRootRef.current, rootRef.current!);
-		const offset = FIXED_OFFSET + optsRef.current.overlayHeight + optsRef.current.offset.toEnd;
+		const sentinel = getSentinel(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
+		const offset = FIXED_OFFSET + optsRef.current.overlay + optsRef.current.offset.toEnd;
 
-		Array.from(top).some(([_, topPos], idx) => {
+		Array.from(start).some(([_, startPos], idx) => {
 			const _firstOffset = first !== true && idx === 0
 				? first
 				: 0;
 
-			if (sentinel + topPos < offset + _firstOffset) {
+			if (sentinel + startPos < offset + _firstOffset) {
 				firstOutEl = els[idx];
 				return false;
 			}
@@ -164,8 +181,8 @@ export function useActiveScroll(
 		});
 
 		if (edgesLast !== true && firstOutEl === last(els)) {
-			const lastBottom = last(Array.from(bottom.values()));
-			if (lastBottom !== undefined && sentinel + lastBottom < offset - edgesLast) {
+			const lastEnd = last(Array.from(end.values()));
+			if (lastEnd !== undefined && sentinel + lastEnd < offset - edgesLast) {
 				setActiveEl(null);
 				return;
 			}
@@ -182,10 +199,11 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 向上滚动时的激活判定。
+	 * @zh 朝滚动起点方向滚动时的激活判定。
+	 * @en Activation logic when scrolling toward the scroll start.
 	 */
-	function onScrollUp(): void {
-		const { els, top, bottom } = targetsRef.current;
+	function onScrollToStart(): void {
+		const { els, start, end } = targetsRef.current;
 		if (els.length === 0)
 			return;
 
@@ -194,15 +212,15 @@ export function useActiveScroll(
 			? last(els)!
 			: null;
 
-		const sentinel = getSentinel(isWindowRootRef.current, rootRef.current!);
-		const offset = FIXED_OFFSET + optsRef.current.overlayHeight + optsRef.current.offset.toStart;
+		const sentinel = getSentinel(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
+		const offset = FIXED_OFFSET + optsRef.current.overlay + optsRef.current.offset.toStart;
 
-		Array.from(bottom).some(([_, bottomPos], idx) => {
-			const _lastOffset = edgesLast !== true && idx === bottom.size - 1
+		Array.from(end).some(([_, endPos], idx) => {
+			const _lastOffset = edgesLast !== true && idx === end.size - 1
 				? -edgesLast
 				: 0;
 
-			if (sentinel + bottomPos > offset + _lastOffset) {
+			if (sentinel + endPos > offset + _lastOffset) {
 				firstInEl = els[idx];
 				return true;
 			}
@@ -210,8 +228,8 @@ export function useActiveScroll(
 		});
 
 		if (first !== true && firstInEl === els[0]) {
-			const firstTop = top.values().next().value;
-			if (firstTop !== undefined && sentinel + firstTop > offset + first) {
+			const firstStart = start.values().next().value;
+			if (firstStart !== undefined && sentinel + firstStart > offset + first) {
 				setActiveEl(null);
 				return;
 			}
@@ -225,23 +243,27 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 核心判定入口：根据滚动方向分发到向上/向下判定。
+	 * @zh 核心判定入口：根据滚动方向分发到起点/终点判定。
+	 * @en Core entry point: dispatches to the start/end logic based on the
+	 * scroll direction.
 	 */
-	function processScroll(prevY: number, isScrollCancel: boolean): number {
-		const nextY = getCurrentY(isWindowRootRef.current, rootRef.current!);
+	function processScroll(prevPos: number, isScrollCancel: boolean): number {
+		const nextPos = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
 
-		if (nextY < prevY) {
-			onScrollUp();
+		if (nextPos < prevPos) {
+			onScrollToStart();
 		}
 		else {
-			onScrollDown(isScrollCancel);
+			onScrollToEnd(isScrollCancel);
 		}
 
-		return nextY;
+		return nextPos;
 	}
 
 	/**
-	 * 滚动空闲检测：连续若干帧位置不变后认为滚动停止。
+	 * @zh 滚动空闲检测：连续若干帧位置不变后认为滚动停止。
+	 * @en Scroll idle detection: scrolling is considered stopped after the
+	 * position stays unchanged for several consecutive frames.
 	 */
 	function setIdleScroll(maxFrames: number = IDLE_FRAMES): void {
 		if (idleRafRef.current !== null) {
@@ -249,16 +271,16 @@ export function useActiveScroll(
 		}
 
 		let frameCount = 0;
-		let rafPrevY = getCurrentY(isWindowRootRef.current, rootRef.current!);
+		let rafPrevPos = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
 		let rafId: number;
 
 		const scrollEnd = () => {
 			frameCount++;
-			const rafNextY = getCurrentY(isWindowRootRef.current, rootRef.current!);
+			const rafNextPos = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
 
-			if (rafPrevY !== rafNextY) {
+			if (rafPrevPos !== rafNextPos) {
 				frameCount = 0;
-				rafPrevY = rafNextY;
+				rafPrevPos = rafNextPos;
 				rafId = window.requestAnimationFrame(scrollEnd);
 				idleRafRef.current = rafId;
 				return;
@@ -281,7 +303,9 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 注册 ResizeObserver，在容器或目标尺寸变化时重新计算位置并判定。
+	 * @zh 注册 ResizeObserver，在容器或目标尺寸变化时重新计算位置并判定。
+	 * @en Registers a ResizeObserver to recompute positions and re-evaluate
+	 * when the container or targets change size.
 	 */
 	function setResizeObserver(): void {
 		if (resizeObserverRef.current)
@@ -296,10 +320,11 @@ export function useActiveScroll(
 					rootRef.current!,
 					isWindowRootRef.current,
 					targetsRef,
+					optsRef.current.direction,
 				);
 				window.requestAnimationFrame(() => {
 					if (!onEdgeReached())
-						onScrollDown();
+						onScrollToEnd();
 				});
 			}
 			else {
@@ -311,7 +336,8 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 断开 ResizeObserver。
+	 * @zh 断开 ResizeObserver。
+	 * @en Disconnects the ResizeObserver.
 	 */
 	function destroyResizeObserver(): void {
 		resizeObserverRef.current?.disconnect();
@@ -319,7 +345,8 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 浏览器前进/后退事件处理。
+	 * @zh 浏览器前进/后退事件处理。
+	 * @en Handles browser forward/back events.
 	 */
 	function onPrevNext(): void {
 		const hash = window.location.hash;
@@ -331,25 +358,32 @@ export function useActiveScroll(
 	}
 
 	/**
-	 * 注册/移除 popstate 监听。
+	 * @zh 注册 popstate 监听。
+	 * @en Registers the popstate listener.
 	 */
 	function addPrevNextListener(): void {
 		window.addEventListener("popstate", onPrevNext);
 	}
 
+	/**
+	 * @zh 移除 popstate 监听。
+	 * @en Removes the popstate listener.
+	 */
 	function removePrevNextListener(): void {
 		window.removeEventListener("popstate", onPrevNext);
 	}
 
 	/**
-	 * 挂载时使用的较短空闲检测。
+	 * @zh 挂载时使用的较短空闲检测。
+	 * @en Shorter idle detection used on mount.
 	 */
 	function setMountIdle(): void {
 		setIdleScroll(MOUNT_IDLE_FRAMES);
 	}
 
 	/**
-	 * 清理 pending 的 requestAnimationFrame。
+	 * @zh 清理 pending 的 requestAnimationFrame。
+	 * @en Cancels the pending requestAnimationFrame.
 	 */
 	function cancelIdleRaf(): void {
 		if (idleRafRef.current !== null) {
@@ -358,7 +392,8 @@ export function useActiveScroll(
 		}
 	}
 
-	// 解析 rootEl
+	// @zh 解析 rootEl
+	// @en Resolve rootEl
 	useEffect(() => {
 		const resolvedRoot
 			= opts.root && "current" in opts.root
@@ -375,7 +410,8 @@ export function useActiveScroll(
 		}
 	}, [opts.root]);
 
-	// 初始化：注册监听并设置初始激活目标
+	// @zh 初始化：注册监听并设置初始激活目标
+	// @en Initialization: register listeners and set the initial active target
 	useEffect(() => {
 		if (typeof window === "undefined")
 			return;
@@ -390,13 +426,14 @@ export function useActiveScroll(
 				rootRef.current!,
 				isWindowRootRef.current,
 				targetsRef,
+				optsRef.current.direction,
 			);
 			setResizeObserver();
 			setMountIdle();
 			addPrevNextListener();
 
 			if (!setFromHash() && !onEdgeReached()) {
-				onScrollDown();
+				onScrollToEnd();
 			}
 		}, 0);
 
@@ -407,9 +444,10 @@ export function useActiveScroll(
 			cancelIdleRaf();
 			setActiveEl(null);
 		};
-	}, [matchMedia, userTargets, opts.root]);
+	}, [matchMedia, userTargets, opts.root, opts.direction]);
 
-	// targets 或 root 变化时重新缓存位置
+	// @zh targets、root 或 direction 变化时重新缓存位置
+	// @en Re-cache positions when targets, root, or direction changes
 	useEffect(() => {
 		if (!matchMedia || !rootRef.current)
 			return;
@@ -419,10 +457,12 @@ export function useActiveScroll(
 			rootRef.current,
 			isWindowRootRef.current,
 			targetsRef,
+			optsRef.current.direction,
 		);
-	}, [userTargets, opts.root, matchMedia]);
+	}, [userTargets, opts.root, opts.direction, matchMedia]);
 
-	// 主滚动监听：仅在滚动空闲、满足宽度阈值且存在目标时注册
+	// @zh 主滚动监听：仅在滚动空闲、满足宽度阈值且存在目标时注册
+	// @en Main scroll listener: registered only when scrolling is idle, the width threshold is met, and targets exist
 	useEffect(() => {
 		if (typeof window === "undefined")
 			return;
@@ -435,7 +475,7 @@ export function useActiveScroll(
 
 		const onScroll = () => {
 			if (!isScrollFromTarget) {
-				prevScrollYRef.current = processScroll(prevScrollYRef.current, false);
+				prevScrollPosRef.current = processScroll(prevScrollPosRef.current, false);
 				onEdgeReached();
 			}
 		};
@@ -447,7 +487,8 @@ export function useActiveScroll(
 		};
 	}, [isScrollIdle, matchMedia, userTargets, isScrollFromTarget]);
 
-	// 目标触发滚动后的动态事件监听：检测到用户干预时恢复普通判定
+	// @zh 目标触发滚动后的动态事件监听：检测到用户干预时恢复普通判定
+	// @en Dynamic listeners after a target-triggered scroll: resume normal logic when user intervention is detected
 	useEffect(() => {
 		if (typeof window === "undefined")
 			return;
@@ -469,14 +510,20 @@ export function useActiveScroll(
 			const isAnchor = (event.target as HTMLElement).tagName === "A";
 			if (!isAnchor) {
 				const isFirefox = window.CSS.supports("-moz-appearance", "none");
-				const containerWidth = isWindowRootRef.current
-					? window.innerWidth
-					: rootRef.current!.clientWidth;
-				const isScrollbar = (event as PointerEvent).clientX >= containerWidth - SCROLLBAR_WIDTH;
+				const horizontal = optsRef.current.direction === "horizontal";
+				// @zh 纵向滚动条贴容器右缘，横向滚动条贴容器底缘
+				// @en The vertical scrollbar sits on the container's right edge; the horizontal scrollbar on the bottom edge
+				const containerSize = isWindowRootRef.current
+					? (horizontal ? window.innerHeight : window.innerWidth)
+					: (horizontal ? rootRef.current!.clientHeight : rootRef.current!.clientWidth);
+				const clickPos = horizontal
+					? (event as PointerEvent).clientY
+					: (event as PointerEvent).clientX;
+				const isScrollbar = clickPos >= containerSize - SCROLLBAR_WIDTH;
 
 				if (isFirefox || isScrollbar) {
 					restoreHighlight();
-					prevScrollYRef.current = processScroll(clickStartYRef.current, true);
+					prevScrollPosRef.current = processScroll(clickStartPosRef.current, true);
 				}
 			}
 		};
@@ -498,7 +545,8 @@ export function useActiveScroll(
 		};
 	}, [isScrollFromTarget, userTargets]);
 
-	// 同步 URL hash
+	// @zh 同步 URL hash
+	// @en Sync the URL hash
 	useEffect(() => {
 		if (opts.hash === "off")
 			return;
@@ -509,7 +557,8 @@ export function useActiveScroll(
 		const start = opts.edges.first === true ? 0 : -1;
 		const newHash = activeIndex > start ? `#${activeId}` : "";
 
-		// 与当前地址一致时跳过，避免多余的状态替换或重复历史记录
+		// @zh 与当前地址一致时跳过，避免多余的状态替换或重复历史记录
+		// @en Skip when it matches the current URL to avoid redundant state replacement or duplicate history entries
 		if (location.hash === newHash)
 			return;
 
@@ -520,7 +569,8 @@ export function useActiveScroll(
 			history.replaceState(history.state, "", url);
 	}, [activeId, activeIndex, opts.hash, opts.edges.first]);
 
-	// 暴露方法
+	// @zh 暴露方法
+	// @en Exposed methods
 	const setActive = useCallback((target: string | HTMLElement) => {
 		if (typeof window === "undefined")
 			return;
@@ -537,7 +587,7 @@ export function useActiveScroll(
 		if (sourceTarget) {
 			setActiveEl(sourceTarget);
 			setIsScrollFromTarget(true);
-			clickStartYRef.current = getCurrentY(isWindowRootRef.current, rootRef.current!);
+			clickStartPosRef.current = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
 		}
 	}, []);
 

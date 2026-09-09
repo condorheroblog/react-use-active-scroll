@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { PageShell } from './PageShell'
-import { useFakeData } from '../hooks/useFakeData'
-import type { EdgeBoundaryOptions } from '../types'
+import { PageShell } from '../PageShell'
+import { useFakeData } from '../../hooks/useFakeData'
+import type { EdgeBoundaryOptions } from '../../types'
 
 /**
- * EdgeBoundary 页面。
+ * @zh EdgeBoundary 页面。
  * 演示 edges 与 offset 对首/尾及滚动边界激活时机的影响。
+ * @en EdgeBoundary page.
+ * Demonstrates how edges and offset affect the activation timing at the first/last targets and scroll boundaries.
  */
 export function EdgeBoundary() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
@@ -60,8 +62,11 @@ export function EdgeBoundary() {
 			tocData={{
 				menuItems,
 				targets,
-				// edges 传数字即关闭首尾强制激活并允许"无激活"：
-				// 首目标距触发线 edges.first 时提前激活，尾目标底部越过触发线 edges.last 后解除。
+				// @zh edges 传数字即关闭首尾强制激活并允许"无激活"：
+				// @en Passing a number to edges disables forced first/last activation and allows "no active":
+				// @zh 首目标距触发线 edges.first 时提前激活，尾目标底部越过触发线 edges.last 后解除。
+				// @en the first target activates early when it is edges.first away from the trigger line, and the last
+				// target deactivates after its bottom crosses the trigger line edges.last.
 				edges: { first: options.edgeFirst, last: options.edgeLast },
 				offset: { toStart: options.offsetToStart, toEnd: options.offsetToEnd },
 			}}
@@ -90,7 +95,7 @@ export function EdgeBoundary() {
 						</section>
 					))}
 
-					{/* 尾部留白观察区：edges.last 需要足够的尾部滚动空间才能观察到 */}
+					{/* @zh 尾部留白观察区：edges.last 需要足够的尾部滚动空间才能观察到 @en Trailing whitespace observation area: edges.last needs enough trailing scroll space to be observable */}
 					<div className="flex h-[150vh] items-start justify-center rounded-md border border-dashed border-border pt-10">
 						<p className="max-w-sm text-center text-xs leading-relaxed text-muted">
 							尾部留白观察区：持续向下滚动经过本区域，观察最后一个 section 何时取消高亮
