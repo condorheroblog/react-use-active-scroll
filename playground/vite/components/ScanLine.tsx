@@ -118,7 +118,8 @@ function renderLines(
 		const isEdge = group.some(line => line.kind === 'edge')
 		const label = `${group.map(line => line.label).join(' / ')} · ${pos}px`
 		const key = group.map(line => line.id).join('+')
-		const edgeBorder = isEdge ? 'border-dotted border-accent/60' : 'border-dashed border-accent'
+		const edgeBorder = isEdge ? 'border-dotted border-amber-500' : 'border-dashed border-accent'
+		const labelColor = isEdge ? 'text-amber-500' : 'text-accent'
 
 		if (horizontal) {
 			// @zh 窗口场景横向 label 下沉避让顶部导航；容器场景贴容器左上角 @en Window mode drops the label to clear the top nav; container mode hugs the container's top-left
@@ -127,10 +128,10 @@ function renderLines(
 				return (
 					<div
 						key={key}
-						className={`pointer-events-none ${posClass} ${labelTop} left-0 z-20`}
+						className={`pointer-events-none ${posClass} ${labelTop} left-0 z-20 ${labelColor}`}
 						aria-hidden="true"
 					>
-						<span className="rounded-sm border border-dotted border-accent/60 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent">
+						<span className="rounded-sm border-2 border-dotted border-amber-500 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap">
 							◀ {label} {t('threshold.offscreenLeft')}
 						</span>
 					</div>
@@ -139,12 +140,12 @@ function renderLines(
 			return (
 				<div
 					key={key}
-					className={`pointer-events-none ${posClass} top-0 bottom-0 z-20 border-l ${edgeBorder}`}
+					className={`pointer-events-none ${posClass} top-0 bottom-0 z-20 border-l-2 ${edgeBorder}`}
 					style={{ left: `${pos}px` }}
 					aria-hidden="true"
 				>
 					<span
-						className={`absolute ${labelTop} left-1 rounded-sm border bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent ${edgeBorder}`}
+						className={`absolute ${labelTop} left-1 rounded-sm border-2 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap ${labelColor} ${edgeBorder}`}
 					>
 						{label}
 					</span>
@@ -161,11 +162,11 @@ function renderLines(
 			return (
 				<div
 					key={key}
-					className={`pointer-events-none ${posClass} left-0 right-0 top-0 z-20`}
+					className={`pointer-events-none ${posClass} left-0 right-0 top-0 z-20 ${labelColor}`}
 					aria-hidden="true"
 				>
 					<div className={labelWrapper}>
-						<span className="mt-1 rounded-sm border border-dotted border-accent/60 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent">
+						<span className="mt-1 rounded-sm border-2 border-dotted border-amber-500 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap">
 							▲ {label} {t('threshold.offscreenTop')}
 						</span>
 					</div>
@@ -174,15 +175,15 @@ function renderLines(
 		}
 		return (
 			<div
-				key={key}
-				className={`pointer-events-none ${posClass} left-0 right-0 z-20 border-t ${edgeBorder}`}
-				style={{ top: `${pos}px` }}
-				aria-hidden="true"
-			>
-				<div className={labelWrapper}>
-					<span
-						className={`${labelTransform} rounded-sm border bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent ${edgeBorder}`}
-					>
+					key={key}
+					className={`pointer-events-none ${posClass} left-0 right-0 z-20 border-t-2 ${edgeBorder}`}
+					style={{ top: `${pos}px` }}
+					aria-hidden="true"
+				>
+					<div className={labelWrapper}>
+						<span
+							className={`${labelTransform} rounded-sm border-2 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap ${labelColor} ${edgeBorder}`}
+						>
 						{label}
 					</span>
 				</div>
