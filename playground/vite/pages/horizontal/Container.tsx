@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
+import { ContainerScanLine } from '../../components/ScanLine'
 import { useFakeData } from '../../hooks/useFakeData'
 
 /**
@@ -27,27 +28,25 @@ export function Container() {
 					{t('containerH.desc')}
 				</p>
 
-				<div
-					ref={containerRef}
-					className="scroll-behavior-dynamic flex h-[60vh] max-h-[560px] gap-6 overflow-auto rounded-md border border-border p-6"
-				>
-					{/* @zh 容器内激活阈值参考线：sticky 于容器左缘，高度随最高卡片拉伸 @en In-container activation-threshold reference line: sticky to the container's left edge, its height stretches with the tallest card */}
-					<div className="sticky left-[10px] z-10 w-0 border-l border-dashed border-accent">
-						<span className="absolute top-1 left-1 rounded-sm border border-dashed border-accent bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent">
-							{t('threshold.triggerLine')}
-						</span>
+				<div className="relative">
+					<div
+						ref={containerRef}
+						className="scroll-behavior-dynamic flex h-[60vh] max-h-[560px] gap-6 overflow-auto rounded-md border border-border p-6"
+					>
+						{sections.map(section => (
+							<section
+								key={section.id}
+								id={section.id}
+								className="w-[min(60vw,520px)] min-h-[125%] flex-none"
+							>
+								<h2 className="mb-4 text-2xl font-semibold text-fg">{section.title}</h2>
+								<p className="leading-relaxed text-muted">{section.text}</p>
+							</section>
+						))}
 					</div>
 
-					{sections.map(section => (
-						<section
-							key={section.id}
-							id={section.id}
-							className="w-[min(60vw,520px)] min-h-[125%] flex-none"
-						>
-							<h2 className="mb-4 text-2xl font-semibold text-fg">{section.title}</h2>
-							<p className="leading-relaxed text-muted">{section.text}</p>
-						</section>
-					))}
+					{/* @zh 容器内激活阈值参考线：absolute 覆盖容器 border-box，按 tocData 自动调整 @en In-container activation threshold reference line: absolute overlay over the container's border-box, auto-adjusting with tocData */}
+					<ContainerScanLine />
 				</div>
 			</div>
 		</PageShell>

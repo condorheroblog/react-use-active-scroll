@@ -25,6 +25,7 @@ export function Window() {
 				targets,
 				direction: 'horizontal',
 				hash: 'replace',
+				offset: { toStart: 200 },
 			}}
 			demoButtons={{ pushSection, shiftSection }}
 		>

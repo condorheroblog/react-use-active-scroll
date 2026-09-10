@@ -4,7 +4,7 @@ import { SectionNav } from '../../components/SectionNav'
 const items = [
 	{ path: '/vertical', label: 'Window' },
 	{ path: '/vertical/container', label: 'Container' },
-	{ path: '/vertical/fixed-header', label: 'FixedHeader' },
+	{ path: '/vertical/overlay', label: 'Overlay' },
 	{ path: '/vertical/edge-boundary', label: 'EdgeBoundary' },
 	{ path: '/vertical/edges', label: 'Edges' },
 	{ path: '/vertical/responsive', label: 'Responsive' },

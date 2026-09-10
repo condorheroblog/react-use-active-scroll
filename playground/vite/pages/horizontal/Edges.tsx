@@ -61,7 +61,7 @@ export function Edges() {
 						{t('edgesH.desc')}
 					</p>
 
-				<HorizontalSections sections={sections} containerRef={containerRef} triggerLine />
+				<HorizontalSections sections={sections} containerRef={containerRef} />
 			</div>
 		</PageShell>
 	)

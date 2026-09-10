@@ -52,7 +52,7 @@ export function Hash() {
 
 	return (
 		<PageShell
-			tocData={{ menuItems, targets, hash: mode }}
+			tocData={{ menuItems, targets, hash: mode, offset: 105 }}
 			demoButtons={{ pushSection, shiftSection }}
 			extraControls={extraControls}
 		>

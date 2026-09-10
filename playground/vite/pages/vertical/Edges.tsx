@@ -47,6 +47,7 @@ export function Edges() {
 			tocData={{
 				menuItems,
 				targets,
+				offset: 105,
 				edges: { first: options.first, last: options.last },
 			}}
 			demoButtons={{ pushSection, shiftSection }}

@@ -5,7 +5,7 @@ import { App } from './App'
 import { VerticalLayout } from './pages/vertical/VerticalLayout'
 import { Window } from './pages/vertical/Window'
 import { Container } from './pages/vertical/Container'
-import { FixedHeader } from './pages/vertical/FixedHeader'
+import { Overlay } from './pages/vertical/Overlay'
 import { EdgeBoundary } from './pages/vertical/EdgeBoundary'
 import { Edges } from './pages/vertical/Edges'
 import { Responsive } from './pages/vertical/Responsive'
@@ -39,7 +39,7 @@ const router = createBrowserRouter(
 					children: [
 						{ index: true, element: <Window /> },
 						{ path: 'container', element: <Container /> },
-						{ path: 'fixed-header', element: <FixedHeader /> },
+						{ path: 'overlay', element: <Overlay /> },
 						{ path: 'edge-boundary', element: <EdgeBoundary /> },
 						{ path: 'edges', element: <Edges /> },
 						{ path: 'responsive', element: <Responsive /> },

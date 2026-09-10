@@ -20,7 +20,7 @@ export function Responsive() {
 
 	return (
 		<PageShell
-			tocData={{ menuItems, targets, mediaQuery: MEDIA_QUERY }}
+			tocData={{ menuItems, targets, mediaQuery: MEDIA_QUERY, offset: 105 }}
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-2xl">

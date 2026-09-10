@@ -16,10 +16,10 @@ export function EdgeBoundary() {
 	const { t } = useTranslation()
 
 	const [options, setOptions] = useState<EdgeBoundaryOptions>({
-		edgeFirst: 100,
-		edgeLast: 100,
-		offsetToStart: 0,
-		offsetToEnd: 0,
+		edgeFirst: -280,
+		edgeLast: 300,
+		offsetToStart: 100,
+		offsetToEnd: 500,
 	})
 
 	const extraControls = (
@@ -29,29 +29,29 @@ export function EdgeBoundary() {
 				<Range
 					label="edges.first"
 					value={options.edgeFirst}
-					min={0}
-					max={300}
+					min={-600}
+					max={600}
 					onChange={v => setOptions(prev => ({ ...prev, edgeFirst: v }))}
 				/>
 				<Range
 					label="edges.last"
 					value={options.edgeLast}
-					min={0}
-					max={300}
+					min={-600}
+					max={600}
 					onChange={v => setOptions(prev => ({ ...prev, edgeLast: v }))}
 				/>
 				<Range
 					label="offset.toStart"
 					value={options.offsetToStart}
-					min={0}
-					max={200}
+					min={-600}
+					max={600}
 					onChange={v => setOptions(prev => ({ ...prev, offsetToStart: v }))}
 				/>
 				<Range
 					label="offset.toEnd"
 					value={options.offsetToEnd}
-					min={0}
-					max={200}
+					min={-600}
+					max={600}
 					onChange={v => setOptions(prev => ({ ...prev, offsetToEnd: v }))}
 				/>
 			</div>

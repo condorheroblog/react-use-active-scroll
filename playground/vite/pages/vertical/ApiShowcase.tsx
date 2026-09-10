@@ -27,7 +27,7 @@ export function ApiShowcase() {
 
 	return (
 		<PageShell
-			tocData={{ menuItems, targets, hash: 'replace' }}
+			tocData={{ menuItems, targets, hash: 'replace', offset: 105 }}
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-2xl">

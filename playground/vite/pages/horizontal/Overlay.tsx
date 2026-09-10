@@ -1,6 +1,7 @@
 import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
+import { ContainerScanLine } from '../../components/ScanLine'
 import { useFakeData } from '../../hooks/useFakeData'
 
 const OVERLAY_WIDTH = 180
@@ -60,6 +61,9 @@ export function Overlay() {
 							</section>
 						))}
 					</div>
+
+					{/* @zh 容器内激活阈值参考线：absolute 覆盖容器 border-box，按 tocData 的 overlay 自动调整 @en In-container activation threshold reference line: absolute overlay over the container's border-box, auto-adjusting with tocData's overlay */}
+					<ContainerScanLine />
 				</div>
 			</div>
 		</PageShell>

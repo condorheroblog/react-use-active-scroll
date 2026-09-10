@@ -41,7 +41,7 @@ export function Responsive() {
 					</p>
 				</div>
 
-				<HorizontalSections sections={sections} containerRef={containerRef} triggerLine />
+				<HorizontalSections sections={sections} containerRef={containerRef} />
 			</div>
 		</PageShell>
 	)

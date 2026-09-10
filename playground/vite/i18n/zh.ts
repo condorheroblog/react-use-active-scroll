@@ -25,7 +25,6 @@ export default {
 	common: {
 		returnValues: "返回值",
 		localOptions: "本地选项",
-		fixedHeader: "固定头部 (overlay: {{px}}px)",
 		fixedOverlay: "固定遮罩 (overlay: {{px}}px)",
 	},
 	threshold: {
@@ -38,7 +37,7 @@ export default {
 	container: {
 		desc: "本页面滚动发生在下方容器内部，window 本身不滚动。root 选项指向容器 ref。",
 	},
-	fixedHeader: {
+	overlay: {
 		desc: "顶部固定条高度为 {{px}}px，核心包通过 overlay 选项将其纳入激活阈值计算。",
 	},
 	edgeBoundary: {

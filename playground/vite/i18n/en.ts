@@ -25,7 +25,6 @@ export default {
 	common: {
 		returnValues: "Return Values",
 		localOptions: "Local Options",
-		fixedHeader: "Fixed Header (overlay: {{px}}px)",
 		fixedOverlay: "Fixed Overlay (overlay: {{px}}px)",
 	},
 	threshold: {
@@ -38,7 +37,7 @@ export default {
 	container: {
 		desc: "Scrolling on this page happens inside the container below; the window itself does not scroll. The root option points to the container ref.",
 	},
-	fixedHeader: {
+	overlay: {
 		desc: "The fixed bar at the top is {{px}}px tall; the core package counts it into the activation threshold via the overlay option.",
 	},
 	edgeBoundary: {

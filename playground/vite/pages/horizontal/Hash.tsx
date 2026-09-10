@@ -70,7 +70,7 @@ export function Hash() {
 					/>
 				</p>
 
-				<HorizontalSections sections={sections} containerRef={containerRef} triggerLine />
+				<HorizontalSections sections={sections} containerRef={containerRef} />
 			</div>
 		</PageShell>
 	)
