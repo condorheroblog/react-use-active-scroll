@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ScanLine } from './ScanLine'
 import { Sidebar } from './Sidebar'
+import { useDemo } from './DemoContext'
 import type { UpdateConfig } from '../types'
 
 interface PageLayoutProps {
@@ -22,6 +22,8 @@ interface PageLayoutProps {
 export function PageLayout({ children, update, fixedSidebar }: PageLayoutProps) {
 	const [drawerOpen, setDrawerOpen] = useState(false)
 	const { t } = useTranslation()
+	// @zh 窗口模式在此挂载核心包触发线覆盖层；容器模式由容器包裹层自行挂载 @en Mount the core trigger-line overlay here in window mode; in container mode the container wrapper mounts it itself
+	const { rootEl, devtools } = useDemo()
 
 	return (
 		<div className="relative mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px]">
@@ -44,7 +46,7 @@ export function PageLayout({ children, update, fixedSidebar }: PageLayoutProps) 
 			</aside>
 
 			{/* @zh 激活阈值参考线（容器内场景自行渲染，此处跳过） @en Activation threshold reference line (rendered separately for in-container scenarios; skipped here) */}
-			<ScanLine />
+			{rootEl ? null : devtools}
 
 			{/* @zh 移动端悬浮目录按钮 @en Mobile floating TOC button */}
 			<button

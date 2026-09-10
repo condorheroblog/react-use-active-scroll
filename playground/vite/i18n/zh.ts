@@ -23,14 +23,6 @@ export default {
 		returnValues: "返回值",
 		localOptions: "本地选项",
 	},
-	threshold: {
-		triggerLine: "触发线",
-		firstTargetLine: "首目标线",
-		lastTargetLine: "尾目标线",
-		offscreenLeft: "（视口外左侧）",
-		offscreenTop: "（视口外上方）",
-	},
-
 	// @zh 旧版演示页（/legacy 路由）使用的翻译键 @en Translation keys used by the legacy demo pages (/legacy route)
 	nav: {
 		vertical: "纵向",

@@ -23,14 +23,6 @@ export default {
 		returnValues: "Return Values",
 		localOptions: "Local Options",
 	},
-	threshold: {
-		triggerLine: "trigger line",
-		firstTargetLine: "first-target line",
-		lastTargetLine: "last-target line",
-		offscreenLeft: "(offscreen left)",
-		offscreenTop: "(offscreen top)",
-	},
-
 	// @zh 旧版演示页（/legacy 路由）使用的翻译键 @en Translation keys used by the legacy demo pages (/legacy route)
 	nav: {
 		vertical: "Vertical",

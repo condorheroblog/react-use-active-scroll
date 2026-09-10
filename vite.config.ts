@@ -31,7 +31,9 @@ export default defineConfig({
 			}
 		},
 		rolldownOptions: {
-			external: ["react"],
+			// @zh 同时外置 react/jsx-runtime（Devtools.tsx 的 automatic JSX 运行时），否则会被打进产物
+			// @en Also externalize react/jsx-runtime (the automatic JSX runtime used by Devtools.tsx), otherwise it would be bundled
+			external: [/^react(\/.*)?$/],
 			output: {
 				minify: {
 					compress: {

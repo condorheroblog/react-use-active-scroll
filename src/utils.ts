@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { Direction, ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions } from "./types";
+import type { DebugOptions, Direction, ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions } from "./types";
 
 export const FIXED_OFFSET = 10;
 export const SCROLLBAR_WIDTH = 17;
@@ -14,6 +14,7 @@ export const defaultOptions: ResolvedOptions = {
 	mediaQuery: "",
 	hash: "off",
 	offset: { toStart: 0, toEnd: 0 },
+	debug: false,
 };
 
 /**
@@ -70,6 +71,22 @@ function resolveEdge(value: boolean | number | undefined, fallback: true | numbe
 }
 
 /**
+ * @zh 归一化调试覆盖层：未传/false 关闭；true 启用默认配置；对象逐字段补默认值。
+ * @en Normalizes the debug overlay: omitted/false disables it; true enables it
+ * with defaults; an object is filled field by field with defaults.
+ */
+function resolveDebug(value: boolean | DebugOptions | undefined): ResolvedOptions["debug"] {
+	if (value === undefined || value === false)
+		return false;
+	if (value === true)
+		return { label: true, className: "" };
+	return {
+		label: value.label ?? true,
+		className: value.className ?? "",
+	};
+}
+
+/**
  * @zh 将用户选项与默认值合并为完整配置。
  * 注意：必须逐字段使用 ?? 合并，浅展开（...options）会让显式传入的
  * undefined 覆盖默认值，例如 mediaQuery: undefined 会覆盖为 undefined
@@ -96,6 +113,7 @@ export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOp
 				toStart: options.offset?.toStart ?? defaultOptions.offset.toStart,
 				toEnd: options.offset?.toEnd ?? defaultOptions.offset.toEnd,
 			},
+		debug: resolveDebug(options.debug),
 	};
 }
 

@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 
 /**
  * @zh 滚动方向。
@@ -18,6 +18,31 @@ export type Direction = "vertical" | "horizontal";
  * containing either array.
  */
 export type Targets = string[] | HTMLElement[] | RefObject<string[] | HTMLElement[] | null>;
+
+/**
+ * @zh 触发线调试覆盖层配置。
+ * 仅在需要可视化调试时传入；颜色通过 CSS 变量定制，见 README "Debug overlay"。
+ * @en Trigger-line debug overlay options.
+ * Pass it only when visual debugging is needed; colors are customized via CSS
+ * variables, see "Debug overlay" in the README.
+ */
+export interface DebugOptions {
+	/**
+	 * @zh 是否显示文字标签（滚动方向与触发位置 px）。
+	 * @en Whether to show text labels (scroll direction and the trigger
+	 * position in px).
+	 * @default true
+	 */
+	label?: boolean
+
+	/**
+	 * @zh 覆盖层 wrapper 的附加 className，便于进一步自定义定位与样式。
+	 * @en Extra className on the overlay wrapper for further positioning and
+	 * style customization.
+	 * @default ''
+	 */
+	className?: string
+}
 
 /**
  * @zh useActiveScroll 配置选项。
@@ -122,6 +147,25 @@ export interface UseActiveScrollOptions {
 		 */
 		toEnd?: number
 	}
+
+	/**
+	 * @zh 触发线调试覆盖层。
+	 * - true：渲染调试覆盖层（等价于 {}）
+	 * - false（默认）：不渲染，返回值 devtools 为 null
+	 * - 对象：细调标签与 className
+	 * 开启后需把返回值中的 devtools 节点渲染到树中：窗口滚动场景放在任意位置
+	 * （fixed 定位）；容器滚动场景放在滚动容器的兄弟节点，且外层包裹元素
+	 * 需要 position: relative。
+	 * @en Trigger-line debug overlay.
+	 * - true: render the debug overlay (equivalent to {})
+	 * - false (default): do not render; the returned devtools node is null
+	 * - object: fine-tune the label and className
+	 * When enabled, render the returned devtools node in your tree: anywhere
+	 * for window scrolling (fixed positioning); for container scrolling, as a
+	 * sibling of the scroll container inside a position: relative wrapper.
+	 * @default false
+	 */
+	debug?: boolean | DebugOptions
 }
 
 /**
@@ -160,6 +204,17 @@ export interface UseActiveScrollReturn {
 	 * -1 when nothing is active.
 	 */
 	activeIndex: number
+
+	/**
+	 * @zh 触发线调试覆盖层节点；未开启 debug 选项时为 null。
+	 * 窗口滚动场景渲染在树中任意位置即可；容器滚动场景需放在滚动容器的
+	 * 兄弟节点，且外层包裹元素需要 position: relative。
+	 * @en The trigger-line debug overlay node; null when the debug option is
+	 * disabled. Render it anywhere in the tree for window scrolling; for
+	 * container scrolling, place it as a sibling of the scroll container
+	 * inside a position: relative wrapper.
+	 */
+	devtools: ReactNode
 }
 
 /**
@@ -179,13 +234,16 @@ export interface TargetsCache {
  * @zh 合并默认值后的完整配置类型。
  * - edges 已归一化：true 表示强制激活；数字表示边缘偏移距离（false 视为 0）。
  * - offset 已归一化为对象形式（传入数字时拆分到两个方向）。
+ * - debug 已归一化：false 表示关闭；对象形式包含完整的标签与 className 配置。
  * @en Full configuration type after merging with defaults.
  * - edges is normalized: true means forced activation; a number means the edge
  *   offset distance (false is treated as 0).
  * - offset is normalized to object form (a number input is split across both
  *   directions).
+ * - debug is normalized: false means disabled; the object form carries the
+ *   full label and className config.
  */
-export interface ResolvedOptions extends Omit<Required<UseActiveScrollOptions>, "edges" | "offset"> {
+export interface ResolvedOptions extends Omit<Required<UseActiveScrollOptions>, "edges" | "offset" | "debug"> {
 	edges: {
 		first: true | number
 		last: true | number
@@ -193,5 +251,9 @@ export interface ResolvedOptions extends Omit<Required<UseActiveScrollOptions>, 
 	offset: {
 		toStart: number
 		toEnd: number
+	}
+	debug: false | {
+		label: boolean
+		className: string
 	}
 }

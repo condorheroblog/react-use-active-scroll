@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useQueryStates, parseAsBoolean, parseAsInteger, parseAsString, parseAsStringLiteral } from 'nuqs'
 import { DemoProvider, useDemo } from '../components/DemoContext'
 import { PageLayout } from '../components/PageLayout'
-import { ContainerScanLine } from '../components/ScanLine'
 import { useFakeData } from '../hooks/useFakeData'
 import type { DemoConfig, Section, UpdateConfig } from '../types'
 
@@ -125,6 +124,8 @@ function DemoContent({
 	setRootEl: (el: HTMLDivElement | null) => void
 }) {
 	const { t } = useTranslation()
+	// @zh 容器模式下核心触发线覆盖层挂在相对定位的容器包裹层内 @en In container mode the core trigger-line overlay is mounted inside the relatively-positioned container wrapper
+	const { devtools } = useDemo()
 
 	const intro = (
 		<div className="mb-6">
@@ -205,12 +206,12 @@ function DemoContent({
 							))}
 						</div>
 						{edgesAreNumbers && <ObservationArea className="mt-16 h-[120vh]" />}
-					</div>
-					<ContainerScanLine />
 				</div>
+				{devtools}
 			</div>
-		)
-	}
+		</div>
+	)
+}
 
 	// @zh ===== 横向 × 窗口：section 水平排布撑开文档宽度，窗口横向滚动 =====
 	// @en ===== Horizontal × window: sections laid out horizontally stretch the document, window scrolls horizontally =====
@@ -287,7 +288,7 @@ function DemoContent({
 					))}
 					{edgesAreNumbers && <ObservationArea className="h-full w-[70vw] max-w-[560px] flex-none pt-10" />}
 				</div>
-				<ContainerScanLine />
+				{devtools}
 			</div>
 		</div>
 	)

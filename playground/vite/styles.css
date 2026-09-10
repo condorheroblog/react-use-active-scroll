@@ -70,6 +70,17 @@ body {
  */
 :root {
 	--ScrollBehavior: smooth;
+
+	/*
+	 * @zh 核心包触发线调试覆盖层（debug: true）配色，接入本演示主题：
+	 * 方向线跟随主题强调色、边缘线琥珀色、标签底色跟随页面底色（明暗主题自适应）。
+	 * @en Colors for the core trigger-line debug overlay (debug: true), mapped to
+	 * this demo's theme: directional lines follow the accent color, edge lines are
+	 * amber, label background follows the page background (adapts to light/dark).
+	 */
+	--uas-debug-line: var(--color-accent);
+	--uas-debug-edge: #f59e0b;
+	--uas-debug-bg: var(--color-bg);
 }
 
 .scroll-behavior-dynamic {

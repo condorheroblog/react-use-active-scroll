@@ -1,2 +1,2 @@
-export type { Direction, Targets, UseActiveScrollOptions, UseActiveScrollReturn } from "./types";
+export type { DebugOptions, Direction, Targets, UseActiveScrollOptions, UseActiveScrollReturn } from "./types";
 export { useActiveScroll } from "./useActiveScroll";

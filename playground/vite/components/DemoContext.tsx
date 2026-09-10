@@ -31,6 +31,11 @@ export interface DemoContextValue {
 	activeEl: HTMLElement | null
 	isActive: (target: string | HTMLElement) => boolean
 	setActive: (target: string | HTMLElement) => void
+	/**
+	 * @zh 核心包内置触发线调试覆盖层节点：窗口模式挂在 PageLayout，容器模式挂在容器包裹层。
+	 * @en The core package's built-in trigger-line debug overlay node: mounted in PageLayout in window mode, and inside the container wrapper in container mode.
+	 */
+	devtools: React.ReactNode
 	pushSection: () => void
 	shiftSection: () => void
 }
@@ -90,6 +95,7 @@ export function DemoProvider({
 				last: config.edgesLastMode === 'force' ? true : config.edgesLastValue,
 			},
 			offset: { toStart: config.offsetToStart, toEnd: config.offsetToEnd },
+			debug: true,
 		}),
 		[
 			config.rootMode,
@@ -110,7 +116,7 @@ export function DemoProvider({
 
 	// @zh ====== 全应用唯一一处调用核心包 Hook ======
 	// @en ====== The single place in the whole app that calls the core hook ======
-	const { activeId, activeIndex, activeEl, isActive, setActive } = useActiveScroll(targets, options)
+	const { activeId, activeIndex, activeEl, isActive, setActive, devtools } = useActiveScroll(targets, options)
 
 	// @zh native 模式由 CSS scroll-behavior 控制；custom 模式由 JS 动画库接管，
 	// 容器滚动场景需要把 scroll-behavior 设为 auto，避免与 JS 动画冲突。
@@ -135,6 +141,7 @@ export function DemoProvider({
 			activeEl,
 			isActive,
 			setActive,
+			devtools,
 			pushSection,
 			shiftSection,
 		}),
@@ -149,6 +156,7 @@ export function DemoProvider({
 			activeEl,
 			isActive,
 			setActive,
+			devtools,
 			pushSection,
 			shiftSection,
 		],

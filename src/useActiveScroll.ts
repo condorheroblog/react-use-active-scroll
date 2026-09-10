@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import type { ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions, UseActiveScrollReturn } from "./types";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Devtools } from "./debug/devtools";
 import {
 	FIXED_OFFSET,
 	getCurrentPos,
@@ -623,11 +624,28 @@ export function useActiveScroll(
 		[activeId, activeEl],
 	);
 
+	// @zh debug 开启时构造触发线覆盖层节点（hook 本身不挂载 DOM，由消费者渲染该节点）
+	// @en Build the trigger-line overlay node when debug is enabled (the hook mounts no DOM itself; consumers render this node)
+	const devtools = useMemo(() => {
+		if (opts.debug === false)
+			return null;
+		return createElement(Devtools, {
+			root: opts.root,
+			direction: opts.direction,
+			overlay: opts.overlay,
+			edges: opts.edges,
+			offset: opts.offset,
+			label: opts.debug.label,
+			className: opts.debug.className,
+		});
+	}, [opts]);
+
 	return {
 		setActive,
 		isActive,
 		activeEl,
 		activeId,
 		activeIndex,
+		devtools,
 	};
 }

@@ -28,7 +28,7 @@ The [Intersection Observer](https://developer.mozilla.org/en-US/docs/Web/API/Int
 ### What it doesn't do
 
 - Scroll to targets
-- Mutate the DOM or inject styles
+- Mutate the DOM or inject styles (the opt-in [`debug`](#debug-overlay-trigger-lines) overlay is the single exception, and only when you render its node)
 - Require or configure hash navigation
 
 ## Installation
@@ -114,6 +114,7 @@ export function Sidebar() {
 		hash: "off", // sync URL hash: "off" | "replace" | "push"
 		edges: { first: true, last: true }, // edge activation strategy
 		offset: 0, // boundary offset, number or { toStart, toEnd }
+		debug: false, // render trigger-line devtools: false | true | { label, className }
 	});
 
 	return <nav>{/* ... */}</nav>;
@@ -129,6 +130,7 @@ export function Sidebar() {
 | root      | `HTMLElement \| null` \| `RefObject<HTMLElement \| null>` | null                         | Scrolling element. Set it only if your content **is not scrolled** by the window. If _null_, defaults to the document root.                                                        |
 | overlay   | `number`                                                 | 0                            | Size in px of any **CSS fixed** content overlapping the start of your scrolling area along the scroll axis — a fixed header (vertical) or a fixed side panel (horizontal). Must be paired with `scroll-margin-top` / `scroll-margin-left` on your targets. |
 | mediaQuery | `string`                                                | `''`                         | A CSS media query, e.g. `'(min-width: 768px)'`; listeners are enabled only while it matches the viewport. Useful when hiding the sidebar with `display: none` on small screens. An invalid query is ignored (with a console warning) and listeners stay always enabled; the same applies when it is omitted. |
+| debug      | `boolean \| DebugOptions`                               | `false`                      | Renders a [trigger-line debug overlay](#debug-overlay-trigger-lines). `true` enables it; an object accepts `label` (show text labels, default `true`) and `className` (extra class on the overlay wrapper). Render the returned `devtools` node yourself. Colors are themed via CSS variables. |
 
 ## Return Value
 
@@ -139,6 +141,7 @@ export function Sidebar() {
 | activeEl    | `HTMLElement \| null`                        | The active target element.                                                  |
 | activeId    | `string`                                     | The active target ID, an empty string when inactive.                        |
 | activeIndex | `number`                                     | Index of the active target in offset order, `-1` when inactive.             |
+| devtools    | `ReactNode`                                  | Trigger-line debug overlay node, `null` unless `debug` is enabled. Render it anywhere for window scrolling, or as a sibling of the scroll container inside a `position: relative` wrapper for container scrolling. |
 
 ## Recipes
 
@@ -221,6 +224,46 @@ export function Sidebar() {
 	return <nav>{/* ... */}</nav>;
 }
 ```
+
+### Debug overlay (trigger lines)
+
+Set `debug: true` and render the returned `devtools` node to visualize the exact trigger lines used by the activation algorithm — handy while tuning `overlay`, `offset`, and `edges`:
+
+```tsx
+export function Sidebar() {
+	const { activeId, devtools } = useActiveScroll(ids, { debug: true });
+
+	return (
+		<>
+			{/* ... */}
+			{devtools}
+		</>
+	);
+}
+```
+
+- **Window scrolling:** `devtools` is `position: fixed`, so you can render it anywhere in the tree.
+- **Container scrolling:** render it as a sibling of the scroll container, inside a `position: relative` wrapper:
+
+```tsx
+<div style={{ position: "relative" }}>
+	<div ref={containerRef} style={{ overflow: "auto" }}>
+		{/* sections */}
+	</div>
+	{devtools}
+</div>
+```
+
+**Reading the lines.** Dashed lines are the directional trigger lines: `↓` / `→` scroll toward the end (`offset.toEnd`), `↑` / `←` scroll toward the start (`offset.toStart`). Dotted lines are the first/last edge-offset lines and only appear when `edges.first` / `edges.last` are numbers (or `false`). Coincident lines are merged into one label, and every label shows its position in px from the root border-box. A line beyond the start edge (negative position) is shown as a pinned `off-screen` marker.
+
+Pass an object to tweak the overlay — `debug: { label: false }` hides the labels, `debug: { className: "my-debug" }` adds a class to the overlay wrapper. Colors and stacking are themed through CSS custom properties (inline styles with fallbacks — no stylesheet is injected):
+
+| CSS variable        | Default   | Used for                          |
+| ------------------- | --------- | --------------------------------- |
+| `--uas-debug-line`  | `#22d3ee` | Directional trigger lines/labels  |
+| `--uas-debug-edge`  | `#f59e0b` | First/last edge lines/labels      |
+| `--uas-debug-bg`    | `#ffffff` | Label background                  |
+| `--uas-debug-z-index` | `9999`  | Overlay stacking order            |
 
 ### Server-side rendering
 
