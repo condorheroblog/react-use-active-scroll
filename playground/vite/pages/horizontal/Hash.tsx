@@ -1,14 +1,15 @@
 import { useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { HorizontalSections } from '../../components/HorizontalSections'
 import { useFakeData } from '../../hooks/useFakeData'
 
 type HashMode = 'off' | 'replace' | 'push'
 
-const MODES: { value: HashMode, desc: string }[] = [
-	{ value: 'off', desc: '不同步 URL' },
-	{ value: 'replace', desc: '替换当前历史记录' },
-	{ value: 'push', desc: '新增历史记录' },
+const MODES: { value: HashMode, key: string }[] = [
+	{ value: 'off', key: 'hash.modeOff' },
+	{ value: 'replace', key: 'hash.modeReplace' },
+	{ value: 'push', key: 'hash.modePush' },
 ]
 
 /**
@@ -22,12 +23,13 @@ export function Hash() {
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
 	const [mode, setMode] = useState<HashMode>('replace')
+	const { t } = useTranslation()
 
 	const extraControls = (
 		<div className="rounded-md border border-border bg-card p-3 text-sm">
 			<div className="mb-2 text-xs font-medium text-muted">hash</div>
 			<div className="space-y-2">
-				{MODES.map(({ value, desc }) => (
+				{MODES.map(({ value, key }) => (
 					<label key={value} className="flex cursor-pointer items-center gap-2">
 						<input
 							type="radio"
@@ -37,7 +39,7 @@ export function Hash() {
 							className="accent-accent"
 						/>
 						<span className="font-mono text-xs text-fg">{`'${value}'`}</span>
-						<span className="text-xs text-muted">{desc}</span>
+						<span className="text-xs text-muted">{t(key)}</span>
 					</label>
 				))}
 			</div>
@@ -58,11 +60,14 @@ export function Hash() {
 		>
 			<div className="mx-auto max-w-4xl">
 				<p className="mb-4 text-sm leading-relaxed text-muted">
-					切换 hash 模式并横向滚动容器，观察地址栏变化：
-					<span className="text-accent">replace</span> 替换当前历史记录，后退不会逐段回退；
-					<span className="text-accent">push</span> 为每个段落新增历史记录，点击浏览器后退 / 前进
-					可逐段恢复高亮（浏览器会同时把容器滚回对应 section）；
-					<span className="text-accent">off</span> 完全不同步 URL。
+					<Trans
+						i18nKey="hashH.desc"
+						components={{
+							replace: <span className="text-accent" />,
+							push: <span className="text-accent" />,
+							off: <span className="text-accent" />,
+						}}
+					/>
 				</p>
 
 				<HorizontalSections sections={sections} containerRef={containerRef} triggerLine />

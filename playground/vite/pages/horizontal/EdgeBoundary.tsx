@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { HorizontalSections } from '../../components/HorizontalSections'
 import { useFakeData } from '../../hooks/useFakeData'
@@ -16,6 +17,7 @@ export function EdgeBoundary() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	const [options, setOptions] = useState<EdgeBoundaryOptions>({
 		edgeFirst: 100,
@@ -26,7 +28,7 @@ export function EdgeBoundary() {
 
 	const extraControls = (
 		<div className="rounded-md border border-border bg-card p-3 text-sm">
-			<div className="mb-2 text-xs font-medium text-muted">Local Options</div>
+			<div className="mb-2 text-xs font-medium text-muted">{t('common.localOptions')}</div>
 			<div className="space-y-3">
 				<Range
 					label="edges.first"
@@ -72,10 +74,10 @@ export function EdgeBoundary() {
 	}
 
 	const lines: ThresholdLine[] = [
-		{ id: 'end', left: BASE + options.offsetToEnd, label: '→ 触发线', kind: 'boundary' },
-		{ id: 'start', left: BASE + options.offsetToStart, label: '← 触发线', kind: 'boundary' },
-		{ id: 'first', left: BASE + options.offsetToEnd + options.edgeFirst, label: '首目标线 edges.first', kind: 'edge' },
-		{ id: 'last', left: BASE + options.offsetToEnd - options.edgeLast, label: '尾目标线 edges.last', kind: 'edge' },
+		{ id: 'end', left: BASE + options.offsetToEnd, label: `→ ${t('threshold.triggerLine')}`, kind: 'boundary' },
+		{ id: 'start', left: BASE + options.offsetToStart, label: `← ${t('threshold.triggerLine')}`, kind: 'boundary' },
+		{ id: 'first', left: BASE + options.offsetToEnd + options.edgeFirst, label: `${t('threshold.firstTargetLine')} edges.first`, kind: 'edge' },
+		{ id: 'last', left: BASE + options.offsetToEnd - options.edgeLast, label: `${t('threshold.lastTargetLine')} edges.last`, kind: 'edge' },
 	]
 
 	// @zh 位置重合的线合并显示（如 toStart 与 toEnd 均为 0 时两条方向线重合）。
@@ -102,12 +104,13 @@ export function EdgeBoundary() {
 		>
 			<div className="mx-auto max-w-4xl">
 				<p className="mb-4 text-sm leading-relaxed text-muted">
-					横向版触发阈值不止一条：虚线 <span className="text-accent">→ / ← 触发线</span>
-					分别是向右、向左滚动时的判定线，随 offset.toEnd / toStart 移动；
-					点线 <span className="text-accent">首目标线 / 尾目标线</span> 随 edges.first / last 移动。
-					若起始处暂无高亮，向右拖动 edges.first 可让首目标提前激活；
-					edges.last 为正距离，尾目标线默认位于视口外左侧，
-					滚动到最右侧的留白观察区可看到最后一个目标延迟取消激活。
+					<Trans
+						i18nKey="edgeBoundaryH.desc"
+						components={{
+							arrow: <span className="text-accent" />,
+							edge: <span className="text-accent" />,
+						}}
+					/>
 				</p>
 
 				<div className="relative">
@@ -119,8 +122,7 @@ export function EdgeBoundary() {
 						{/* @zh 尾部留白观察区：edges.last 需要足够的尾部滚动空间才能观察到 @en Trailing whitespace observation area: edges.last needs enough trailing scroll space to be observable */}
 						<div className="flex h-full w-[70vw] max-w-[560px] flex-none items-start justify-center rounded-md border border-dashed border-border pt-10">
 							<p className="max-w-xs text-center text-xs leading-relaxed text-muted">
-								尾部留白观察区：持续向右滚动经过本区域，观察最后一个 section 何时取消高亮
-								（edges.last 越大，取消得越晚）；再向左滚动，观察它何时提前恢复高亮。
+								{t('edgeBoundaryH.observation')}
 							</p>
 						</div>
 					</HorizontalSections>
@@ -141,7 +143,7 @@ export function EdgeBoundary() {
 								return (
 									<div key={key} className="absolute top-0 bottom-0 left-0">
 										<span className="absolute top-1 left-1 rounded-sm border border-dotted border-accent/60 bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent">
-											◀ {label}（视口外左侧）
+											◀ {label} {t('threshold.offscreenLeft')}
 										</span>
 									</div>
 								)

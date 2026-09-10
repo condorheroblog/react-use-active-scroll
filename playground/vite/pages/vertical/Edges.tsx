@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 import type { EdgesOptions } from '../../types'
@@ -16,6 +17,7 @@ import type { EdgesOptions } from '../../types'
 export function Edges() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	const [options, setOptions] = useState<EdgesOptions>({
 		first: true,
@@ -24,7 +26,7 @@ export function Edges() {
 
 	const extraControls = (
 		<div className="rounded-md border border-border bg-card p-3 text-sm">
-			<div className="mb-2 text-xs font-medium text-muted">Local Options</div>
+			<div className="mb-2 text-xs font-medium text-muted">{t('common.localOptions')}</div>
 			<div className="space-y-2">
 				<Toggle
 					label="edges.first"
@@ -51,9 +53,9 @@ export function Edges() {
 			extraControls={extraControls}
 		>
 			<div className="mx-auto max-w-2xl">
-				<p className="mb-8 text-sm text-muted">
-					切换 edges.first / edges.last，滚动到页面最顶部或最底部，观察首尾 section 是否被强制激活。
-				</p>
+					<p className="mb-8 text-sm text-muted">
+						{t('edges.desc')}
+					</p>
 
 				<div className="space-y-16">
 					{sections.map(section => (

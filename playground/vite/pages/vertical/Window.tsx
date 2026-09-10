@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useActiveScroll } from 'react-use-active-scroll'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
@@ -14,6 +15,7 @@ import { useFakeData } from '../../hooks/useFakeData'
 export function Window() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	// @zh 本页直接在主内容区消费返回值，便于可视化展示。
 	// @en This page consumes the return values directly in the main content area for visual display.
@@ -29,7 +31,7 @@ export function Window() {
 			<div className="mx-auto max-w-2xl">
 				{/* @zh 返回值展示面板 @en Return-value display panel */}
 				<div className="mb-8 rounded-md border border-border bg-card p-4 text-sm">
-					<div className="mb-2 font-medium text-fg">Return Values</div>
+					<div className="mb-2 font-medium text-fg">{t('common.returnValues')}</div>
 					<div className="grid grid-cols-2 gap-2 text-muted sm:grid-cols-4">
 						<div>
 							<span className="block text-xs">activeId</span>

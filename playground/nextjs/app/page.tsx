@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-// @zh 通过 next.config.js / tsconfig paths 映射到本地源码。
-// @en Mapped to local source via next.config.js / tsconfig paths.
+// @zh 通过 tsconfig paths 映射到本地源码。
+// @en Mapped to local source via tsconfig paths.
 import { useActiveScroll } from "react-use-active-scroll";
 
 const sections = Array.from({ length: 8 }, (_, index) => ({

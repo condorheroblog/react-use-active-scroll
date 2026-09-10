@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 
@@ -14,6 +15,7 @@ export function Container() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	return (
 		<PageShell
@@ -22,9 +24,7 @@ export function Container() {
 		>
 			<div className="mx-auto max-w-4xl">
 				<p className="mb-4 text-sm text-muted">
-					容器同时开启横向与纵向滚动：卡片高度超出容器高度，纵向滚动条常驻。
-					上下滚动容器时目录高亮保持不变，左右滚动时才推进高亮——direction: 'horizontal'
-					只跟踪横向滚动位置。
+					{t('containerH.desc')}
 				</p>
 
 				<div
@@ -34,7 +34,7 @@ export function Container() {
 					{/* @zh 容器内激活阈值参考线：sticky 于容器左缘，高度随最高卡片拉伸 @en In-container activation-threshold reference line: sticky to the container's left edge, its height stretches with the tallest card */}
 					<div className="sticky left-[10px] z-10 w-0 border-l border-dashed border-accent">
 						<span className="absolute top-1 left-1 rounded-sm border border-dashed border-accent bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent">
-							trigger line
+							{t('threshold.triggerLine')}
 						</span>
 					</div>
 

@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { HorizontalSections } from '../../components/HorizontalSections'
 import { useFakeData } from '../../hooks/useFakeData'
@@ -18,6 +19,7 @@ export function Edges() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	const [options, setOptions] = useState<EdgesOptions>({
 		first: true,
@@ -26,7 +28,7 @@ export function Edges() {
 
 	const extraControls = (
 		<div className="rounded-md border border-border bg-card p-3 text-sm">
-			<div className="mb-2 text-xs font-medium text-muted">Local Options</div>
+			<div className="mb-2 text-xs font-medium text-muted">{t('common.localOptions')}</div>
 			<div className="space-y-2">
 				<Toggle
 					label="edges.first"
@@ -55,10 +57,9 @@ export function Edges() {
 			extraControls={extraControls}
 		>
 			<div className="mx-auto max-w-4xl">
-				<p className="mb-4 text-sm text-muted">
-					切换 edges.first / edges.last，将容器滚动到最左或最右，观察首尾 section 是否被强制激活；
-					关闭后首尾目标按普通触发线判定，允许出现"无激活"状态。
-				</p>
+					<p className="mb-4 text-sm text-muted">
+						{t('edgesH.desc')}
+					</p>
 
 				<HorizontalSections sections={sections} containerRef={containerRef} triggerLine />
 			</div>

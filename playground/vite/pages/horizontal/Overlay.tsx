@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 
@@ -16,6 +17,7 @@ export function Overlay() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	return (
 		<PageShell
@@ -30,15 +32,13 @@ export function Overlay() {
 		>
 			<div className="mx-auto max-w-4xl">
 				<p className="mb-4 text-sm text-muted">
-					左侧固定面板宽 {OVERLAY_WIDTH}px，悬浮于横向滚动容器之上。核心包通过 overlay
-					选项将面板宽度纳入激活阈值：完全被面板遮挡的 section 不会立即激活，
-					而是越过面板右缘的触发线后才激活。
+					{t('overlayH.desc', { px: OVERLAY_WIDTH })}
 				</p>
 
 				<div className="relative">
 					{/* @zh 左侧固定面板：绝对定位于容器左缘，不随容器滚动 @en Fixed left panel: absolutely positioned at the container's left edge, it does not scroll with the container */}
 					<div className="absolute top-0 bottom-0 left-0 z-30 flex w-[180px] items-center justify-center border-r border-border bg-card/95 px-4 text-center text-xs leading-relaxed text-muted backdrop-blur">
-						Fixed Overlay (overlay: {OVERLAY_WIDTH}px)
+						{t('common.fixedOverlay', { px: OVERLAY_WIDTH })}
 					</div>
 
 					<div

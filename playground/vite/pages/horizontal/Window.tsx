@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 
@@ -15,6 +16,7 @@ import { useFakeData } from '../../hooks/useFakeData'
 export function Window() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	return (
 		<PageShell
@@ -29,9 +31,7 @@ export function Window() {
 			{/* @zh 说明块限制宽度，避免随横向内容一起被拉宽 @en The description block is width-limited so it is not stretched along with the horizontal content */}
 			<div className="max-w-2xl">
 				<p className="mb-4 text-sm leading-relaxed text-muted">
-					本演示针对浏览器窗口（root 缺省）：section 水平排布撑开文档宽度，
-					窗口出现横向滚动条。向右滚动窗口（底部滚动条 / shift + 滚轮 / 触控板横扫）
-					时目录依次高亮。direction: 'horizontal'，hash: 'replace'。
+					{t('windowH.desc')}
 				</p>
 			</div>
 

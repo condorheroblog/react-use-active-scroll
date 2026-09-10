@@ -1,4 +1,5 @@
 import { useContext } from 'react'
+import { useTranslation } from 'react-i18next'
 import { TOCDataContext } from '../pages/PageShell'
 
 /**
@@ -23,6 +24,7 @@ import { TOCDataContext } from '../pages/PageShell'
 export function ScanLine() {
 	const tocData = useContext(TOCDataContext)
 	const containerRef = tocData?.containerRef
+	const { t } = useTranslation()
 
 	// @zh 容器滚动场景在页面自身内部渲染参考线，避免全局固定定位错位。
 	// @en In container-scroll scenarios the reference lines are rendered inside the page itself to avoid misalignment from global fixed positioning.
@@ -52,17 +54,22 @@ export function ScanLine() {
 		kind: 'boundary' | 'edge'
 	}
 
+	// @zh 标签由翻译 + 方向箭头 + 代码标识拼装，便于随语言切换
+	// @en Labels are assembled from translations + direction arrows + code identifiers so they follow the language switch
+	const triggerLineLabel = `${horizontal ? '→' : '↓'} ${t('threshold.triggerLine')}`
+	const startLineLabel = `${horizontal ? '←' : '↑'} ${t('threshold.triggerLine')}`
+
 	const lines: ThresholdLine[] = [
 		{
 			id: 'end',
 			pos: BASE + toEnd,
-			label: horizontal ? '→ 触发线' : '↓ 触发线',
+			label: triggerLineLabel,
 			kind: 'boundary',
 		},
 		{
 			id: 'start',
 			pos: BASE + toStart,
-			label: horizontal ? '← 触发线' : '↑ 触发线',
+			label: startLineLabel,
 			kind: 'boundary',
 		},
 	]
@@ -70,7 +77,7 @@ export function ScanLine() {
 		lines.push({
 			id: 'first',
 			pos: BASE + toEnd + edgeFirst,
-			label: '首目标线 edges.first',
+			label: `${t('threshold.firstTargetLine')} edges.first`,
 			kind: 'edge',
 		})
 	}
@@ -78,7 +85,7 @@ export function ScanLine() {
 		lines.push({
 			id: 'last',
 			pos: BASE + toEnd - edgeLast,
-			label: '尾目标线 edges.last',
+			label: `${t('threshold.lastTargetLine')} edges.last`,
 			kind: 'edge',
 		})
 	}
@@ -113,8 +120,8 @@ export function ScanLine() {
 								aria-hidden="true"
 							>
 								<span className="rounded-sm border border-dotted border-accent/60 bg-bg px-1.5 py-0.5 text-[10px] text-accent">
-									◀ {label}（视口外左侧）
-								</span>
+										◀ {label} {t('threshold.offscreenLeft')}
+									</span>
 							</div>
 						)
 					}
@@ -163,8 +170,8 @@ export function ScanLine() {
 						>
 							<div className="mx-auto flex max-w-7xl justify-end px-4">
 								<span className="mt-1 rounded-sm border border-dotted border-accent/60 bg-bg px-1.5 py-0.5 text-[10px] text-accent">
-									▲ {label}（视口外上方）
-								</span>
+										▲ {label} {t('threshold.offscreenTop')}
+									</span>
 							</div>
 						</div>
 					)

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ScanLine } from './ScanLine'
 import { Sidebar } from './Sidebar'
 
@@ -19,6 +20,7 @@ interface PageLayoutProps {
  */
 export function PageLayout({ children, extraControls, fixedSidebar }: PageLayoutProps) {
 	const [drawerOpen, setDrawerOpen] = useState(false)
+	const { t } = useTranslation()
 
 	return (
 		<div className="relative mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-[1fr_220px]">
@@ -48,7 +50,7 @@ export function PageLayout({ children, extraControls, fixedSidebar }: PageLayout
 				type="button"
 				onClick={() => setDrawerOpen(true)}
 				className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-white shadow-sm md:hidden"
-				aria-label="打开目录"
+				aria-label={t('aria.openToc')}
 			>
 				<MenuIcon />
 			</button>
@@ -63,12 +65,12 @@ export function PageLayout({ children, extraControls, fixedSidebar }: PageLayout
 					/>
 					<div className="fixed bottom-0 right-0 top-0 z-50 w-72 translate-x-0 transform border-l border-border bg-bg p-4 shadow-lg transition-transform duration-200 md:hidden">
 						<div className="mb-4 flex items-center justify-between">
-							<span className="text-sm font-semibold text-fg">目录</span>
+							<span className="text-sm font-semibold text-fg">{t('toc.title')}</span>
 							<button
 								type="button"
 								onClick={() => setDrawerOpen(false)}
 								className="rounded-md p-1 text-muted hover:bg-card hover:text-fg"
-								aria-label="关闭目录"
+								aria-label={t('aria.closeToc')}
 							>
 								<CloseIcon />
 							</button>

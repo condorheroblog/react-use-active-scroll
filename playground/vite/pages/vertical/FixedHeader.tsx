@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 
@@ -15,6 +16,7 @@ const HEADER_HEIGHT = 60
 export function FixedHeader() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	return (
 		<PageShell
@@ -26,12 +28,12 @@ export function FixedHeader() {
 				className="fixed left-0 right-0 top-0 z-40 flex items-center border-b border-border bg-card px-6 text-sm font-medium text-fg"
 				style={{ height: HEADER_HEIGHT }}
 			>
-				Fixed Header (overlay: {HEADER_HEIGHT}px)
+				{t('common.fixedHeader', { px: HEADER_HEIGHT })}
 			</div>
 
 			<div className="mx-auto max-w-2xl pt-24">
 				<p className="mb-8 text-sm text-muted">
-					顶部固定条高度为 {HEADER_HEIGHT}px，核心包通过 overlay 选项将其纳入激活阈值计算。
+					{t('fixedHeader.desc', { px: HEADER_HEIGHT })}
 				</p>
 
 				<div className="space-y-16">

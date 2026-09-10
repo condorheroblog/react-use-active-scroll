@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Section } from '../types'
 
 interface HorizontalSectionsProps {
@@ -22,6 +23,7 @@ interface HorizontalSectionsProps {
  * Page descriptions, local controls, and other differences are organized by each page itself.
  */
 export function HorizontalSections({ sections, containerRef, triggerLine, indexLabel, children }: HorizontalSectionsProps) {
+	const { t } = useTranslation()
 	return (
 		<div
 			ref={containerRef}
@@ -31,7 +33,7 @@ export function HorizontalSections({ sections, containerRef, triggerLine, indexL
 			{triggerLine && (
 				<div className="sticky left-[10px] z-10 h-full w-0 border-l border-dashed border-accent">
 					<span className="absolute top-1 left-1 rounded-sm border border-dashed border-accent bg-bg px-1.5 py-0.5 text-[10px] whitespace-nowrap text-accent">
-						trigger line
+						{t('threshold.triggerLine')}
 					</span>
 				</div>
 			)}

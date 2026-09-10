@@ -1,4 +1,5 @@
 import { useContext, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import animateScrollTo from 'animated-scroll-to'
 // @zh 通过 vite.config.js 的 alias 映射到本地源码，保持导入与包名一致。
 // @en Mapped to local source via the alias in vite.config.js so the import matches the package name.
@@ -16,6 +17,7 @@ export function TOC() {
 	const tocData = useContext(TOCDataContext)
 	const radios = useContext(DemoRadiosContext)
 	if (!tocData || !radios) throw new Error('TOC must be used within providers')
+	const { t } = useTranslation()
 
 	const {
 		menuItems,
@@ -140,7 +142,7 @@ export function TOC() {
 
 	return (
 		<nav ref={navRef} className="relative rounded-md border border-border bg-card p-3">
-			<div className="mb-2 text-xs font-medium text-muted">目录</div>
+			<div className="mb-2 text-xs font-medium text-muted">{t('toc.title')}</div>
 			{/* @zh 不使用 space-y：Tracker 按 单项高度 * 索引 平移，项间不能有额外间隙 @en Do not use space-y: the Tracker translates by itemHeight * index, so items cannot have extra gaps */}
 			<ul className="relative list-none p-0">
 				{activeIndex >= 0 && activeItemHeight > 0 && (

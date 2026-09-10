@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { HorizontalSections } from '../../components/HorizontalSections'
 import { useFakeData } from '../../hooks/useFakeData'
@@ -17,6 +18,7 @@ export function Responsive() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	return (
 		<PageShell
@@ -33,8 +35,7 @@ export function Responsive() {
 				<div className="mb-4 rounded-md border border-border bg-card p-4 text-sm">
 					<div className="mb-2 font-medium text-fg">minWidth: {MIN_WIDTH}px</div>
 					<p className="text-muted">
-						当视口宽度小于 {MIN_WIDTH}px 时，useActiveScroll 自动停止监听，目录不再高亮；
-						拉宽窗口超过 {MIN_WIDTH}px 后重新启用。请尝试调整浏览器宽度观察变化。
+						{t('responsiveH.desc', { px: MIN_WIDTH })}
 					</p>
 				</div>
 

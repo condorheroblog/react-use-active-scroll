@@ -1,4 +1,5 @@
 import { useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 
@@ -14,6 +15,7 @@ export function Container() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const containerRef = useRef<HTMLDivElement>(null)
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
+	const { t } = useTranslation()
 
 	return (
 		<PageShell
@@ -22,7 +24,7 @@ export function Container() {
 		>
 			<div className="mx-auto max-w-2xl">
 				<p className="mb-4 text-sm text-muted">
-					本页面滚动发生在下方容器内部，window 本身不滚动。root 选项指向容器 ref。
+					{t('container.desc')}
 				</p>
 
 				{/*
@@ -39,7 +41,7 @@ export function Container() {
 					<div className="sticky top-2 z-10 border-t border-dashed border-accent">
 						<div className="flex justify-end">
 							<span className="-translate-y-1/2 rounded-sm border border-dashed border-accent bg-bg px-1.5 py-0.5 text-[10px] text-accent">
-								trigger line
+								{t('threshold.triggerLine')}
 							</span>
 						</div>
 					</div>
