@@ -1,8 +1,7 @@
-import { useContext } from 'react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { TOCDataContext } from '../pages/PageShell'
-import type { TOCData } from '../types'
+import { useDemo } from './DemoContext'
+import type { DemoConfig } from '../types'
 
 /** @zh 核心包的固定基准偏移（src/utils.ts FIXED_OFFSET） @en Fixed base offset from the core package (src/utils.ts FIXED_OFFSET) */
 const FIXED_OFFSET = 10
@@ -18,14 +17,25 @@ interface ThresholdLine {
 type RenderMode = 'fixed' | 'absolute'
 
 /**
- * @zh 由 tocData 计算阈值线集合。
+ * @zh 阈值线计算所需的归一化配置。
+ * @en Normalized config required for threshold-line computation.
+ */
+interface LineConfig {
+	direction: DemoConfig['direction']
+	overlay: number
+	edges: { first: boolean | number; last: boolean | number }
+	offset: { toStart: number; toEnd: number }
+}
+
+/**
+ * @zh 由配置计算阈值线集合。
  * 阈值 = FIXED_OFFSET(10) + overlay + 方向边界偏移 + 首尾边缘偏移，
  * 与核心包 src/useActiveScroll.ts 的判定一致（按容器/视口 border-box 计量）。
  * - ↓ / → 朝终点滚动：基线随 offset.toEnd 移动；首目标再叠加 edges.first（提前激活），
  *   尾目标在其末端越过触发线 edges.last 距离后解除。
  * - ↑ / ← 朝起点滚动：基线随 offset.toStart 移动；边缘偏移同理参与判定。
  * 边缘偏移仅在 edges.first / edges.last 为数字（或 false）时才参与判定。
- * @en Compute the set of threshold lines from tocData.
+ * @en Compute the set of threshold lines from the config.
  * threshold = FIXED_OFFSET(10) + overlay + directional boundary offset + first/last edge offset,
  * matching the core package's logic in src/useActiveScroll.ts (measured from the container/viewport border-box).
  * - ↓ / → scrolling toward the end: the baseline moves with offset.toEnd; the first target adds
@@ -33,18 +43,16 @@ type RenderMode = 'fixed' | 'absolute'
  * - ↑ / ← scrolling toward the start: the baseline moves with offset.toStart; edge offsets participate likewise.
  * Edge offsets only participate when edges.first / edges.last are numbers (or false).
  */
-function computeLines(tocData: TOCData, t: TFunction): ThresholdLine[] {
-	const horizontal = tocData.direction === 'horizontal'
-	const overlay = tocData.overlay ?? 0
-	const offset = tocData.offset
-	const toStart = typeof offset === 'number' ? offset : (offset?.toStart ?? 0)
-	const toEnd = typeof offset === 'number' ? offset : (offset?.toEnd ?? 0)
+function computeLines(cfg: LineConfig, t: (key: string) => string): ThresholdLine[] {
+	const horizontal = cfg.direction === 'horizontal'
+	const overlay = cfg.overlay
+	const { toStart, toEnd } = cfg.offset
 	// @zh edges.first / last 缺省为 true（强制激活）；传数字或 false 时边缘偏移才参与判定。
 	// @en edges.first / last default to true (forced activation); edge offsets only participate when a number or false is passed.
-	const firstEdge = tocData.edges?.first
-	const lastEdge = tocData.edges?.last
-	const showFirstEdge = firstEdge !== undefined && firstEdge !== true
-	const showLastEdge = lastEdge !== undefined && lastEdge !== true
+	const firstEdge = cfg.edges.first
+	const lastEdge = cfg.edges.last
+	const showFirstEdge = firstEdge !== true
+	const showLastEdge = lastEdge !== true
 	const edgeFirst = typeof firstEdge === 'number' ? firstEdge : 0
 	const edgeLast = typeof lastEdge === 'number' ? lastEdge : 0
 
@@ -184,41 +192,54 @@ function renderLines(
 }
 
 /**
+ * @zh 从 DemoContext 读取归一化阈值配置。
+ * @en Read the normalized threshold config from DemoContext.
+ */
+function useLineConfig(): LineConfig {
+	const { config, effectiveOverlay } = useDemo()
+	return {
+		direction: config.direction,
+		overlay: effectiveOverlay,
+		edges: {
+			first: config.edgesFirstMode === 'force' ? true : config.edgesFirstValue,
+			last: config.edgesLastMode === 'force' ? true : config.edgesLastValue,
+		},
+		offset: { toStart: config.offsetToStart, toEnd: config.offsetToEnd },
+	}
+}
+
+/**
  * @zh 滚动触发阈值参考线（窗口滚动场景）。
- * 从 TOCDataContext 读取 overlay/offset/edges 等选项，自动调整阈值线位置；
- * 容器滚动场景（tocData.containerRef 存在）由 ContainerScanLine 负责，此处跳过。
+ * 容器滚动场景（rootEl 存在）由 ContainerScanLine 负责，此处跳过。
  * @en Scroll trigger threshold reference lines (window-scroll scenario).
- * Reads overlay/offset/edges from TOCDataContext and auto-adjusts the line positions;
- * container-scroll scenarios (tocData.containerRef present) are handled by ContainerScanLine, which is skipped here.
+ * Container-scroll scenarios (rootEl present) are handled by ContainerScanLine, which is skipped here.
  */
 export function ScanLine() {
-	const tocData = useContext(TOCDataContext)
+	const { rootEl } = useDemo()
+	const cfg = useLineConfig()
 	const { t } = useTranslation()
-	if (!tocData || tocData.containerRef) return null
-	const horizontal = tocData.direction === 'horizontal'
-	const groups = groupLines(computeLines(tocData, t))
-	return <>{renderLines(groups, { mode: 'fixed', horizontal, t })}</>
+	if (rootEl) return null
+	const groups = groupLines(computeLines(cfg, t))
+	return <>{renderLines(groups, { mode: 'fixed', horizontal: cfg.direction === 'horizontal', t })}</>
 }
 
 /**
  * @zh 容器内滚动触发阈值参考线。
- * 与 ScanLine 共用计算逻辑，但以 absolute 定位覆盖容器 border-box，
- * 让容器滚动场景的触发线也随 tocData 的 overlay/offset/edges 自动调整。
+ * 与 ScanLine 共用计算逻辑，但以 absolute 定位覆盖容器 border-box。
  * 需置于一个 position: relative 的包裹元素内（作为滚动容器的兄弟节点）。
  * @en In-container scroll trigger threshold reference lines.
- * Shares the computation logic with ScanLine but uses absolute positioning over the container's border-box,
- * so the container-scroll trigger lines also auto-adjust with tocData's overlay/offset/edges.
+ * Shares the computation logic with ScanLine but uses absolute positioning over the container's border-box.
  * Must be placed inside a position: relative wrapper as a sibling of the scroll container.
  */
 export function ContainerScanLine() {
-	const tocData = useContext(TOCDataContext)
+	const { rootEl } = useDemo()
+	const cfg = useLineConfig()
 	const { t } = useTranslation()
-	if (!tocData || !tocData.containerRef) return null
-	const horizontal = tocData.direction === 'horizontal'
-	const groups = groupLines(computeLines(tocData, t))
+	if (!rootEl) return null
+	const groups = groupLines(computeLines(cfg, t))
 	return (
 		<div className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
-			{renderLines(groups, { mode: 'absolute', horizontal, t })}
+			{renderLines(groups, { mode: 'absolute', horizontal: cfg.direction === 'horizontal', t })}
 		</div>
 	)
 }

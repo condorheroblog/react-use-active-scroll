@@ -2,28 +2,29 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScanLine } from './ScanLine'
 import { Sidebar } from './Sidebar'
+import type { UpdateConfig } from '../types'
 
 interface PageLayoutProps {
 	children: React.ReactNode
-	extraControls?: React.ReactNode
+	update: UpdateConfig
 	/** @zh 窗口横向滚动场景：侧边栏改为 fixed，避免随文档横向滚出视口 @en Window horizontal-scroll scenario: make the sidebar fixed so it does not scroll out of the viewport horizontally */
 	fixedSidebar?: boolean
 }
 
 /**
  * @zh 页面公共布局。
- * - PC：右侧 sticky 目录侧边栏（窗口横向滚动场景为 fixed）。
+ * - PC：右侧 sticky 目录 + 配置面板侧边栏（窗口横向滚动场景为 fixed）。
  * - 移动端（< md）：侧边栏隐藏，点击悬浮按钮从右侧滑出抽屉。
  * @en Shared page layout.
- * - PC: a sticky TOC sidebar on the right (fixed in the window horizontal-scroll scenario).
+ * - PC: a sticky sidebar with the TOC and config panel on the right (fixed in the window horizontal-scroll scenario).
  * - Mobile (< md): the sidebar is hidden; a floating button slides out a drawer from the right.
  */
-export function PageLayout({ children, extraControls, fixedSidebar }: PageLayoutProps) {
+export function PageLayout({ children, update, fixedSidebar }: PageLayoutProps) {
 	const [drawerOpen, setDrawerOpen] = useState(false)
 	const { t } = useTranslation()
 
 	return (
-		<div className="relative mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-[1fr_220px]">
+		<div className="relative mx-auto grid max-w-7xl grid-cols-1 md:grid-cols-[minmax(0,1fr)_300px]">
 			{/* @zh 主内容区 @en Main content area */}
 			<div className="min-w-0 px-4 pb-20 pt-8 md:px-8">
 				{children}
@@ -32,12 +33,12 @@ export function PageLayout({ children, extraControls, fixedSidebar }: PageLayout
 			{/* @zh 桌面端侧边栏：窗口横向滚动场景 fixed 常驻，否则 sticky 跟随 @en Desktop sidebar: fixed and persistent in the window horizontal-scroll scenario, otherwise sticky */}
 			<aside className="hidden md:block">
 				{fixedSidebar ? (
-					<div className="fixed top-20 right-4 z-40 w-[220px] space-y-6">
-						<Sidebar extraControls={extraControls} />
+					<div className="fixed top-20 right-4 z-40 w-[300px]">
+						<Sidebar update={update} />
 					</div>
 				) : (
-					<div className="sticky top-20 space-y-6">
-						<Sidebar extraControls={extraControls} />
+					<div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-1">
+						<Sidebar update={update} />
 					</div>
 				)}
 			</aside>
@@ -55,7 +56,7 @@ export function PageLayout({ children, extraControls, fixedSidebar }: PageLayout
 				<MenuIcon />
 			</button>
 
-			{/* @zh 移动端目录抽屉 @en Mobile TOC drawer */}
+			{/* @zh 移动端配置抽屉 @en Mobile config drawer */}
 			{drawerOpen && (
 				<>
 					<div
@@ -63,9 +64,9 @@ export function PageLayout({ children, extraControls, fixedSidebar }: PageLayout
 						onClick={() => setDrawerOpen(false)}
 						aria-hidden="true"
 					/>
-					<div className="fixed bottom-0 right-0 top-0 z-50 w-72 translate-x-0 transform border-l border-border bg-bg p-4 shadow-lg transition-transform duration-200 md:hidden">
+					<div className="fixed bottom-0 right-0 top-0 z-50 w-80 max-w-[85vw] overflow-y-auto border-l border-border bg-bg p-4 shadow-lg md:hidden">
 						<div className="mb-4 flex items-center justify-between">
-							<span className="text-sm font-semibold text-fg">{t('toc.title')}</span>
+							<span className="text-sm font-semibold text-fg">{t('panel.title')}</span>
 							<button
 								type="button"
 								onClick={() => setDrawerOpen(false)}
@@ -75,7 +76,7 @@ export function PageLayout({ children, extraControls, fixedSidebar }: PageLayout
 								<CloseIcon />
 							</button>
 						</div>
-						<Sidebar extraControls={extraControls} />
+						<Sidebar update={update} />
 					</div>
 				</>
 			)}

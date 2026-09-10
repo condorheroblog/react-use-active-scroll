@@ -1,67 +1,28 @@
-import { useContext, useMemo, useRef } from 'react'
+import { useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import animateScrollTo from 'animated-scroll-to'
-// @zh 通过 vite.config.js 的 alias 映射到本地源码，保持导入与包名一致。
-// @en Mapped to local source via the alias in vite.config.js so the import matches the package name.
-import { useActiveScroll } from 'react-use-active-scroll'
-import { DemoRadiosContext } from '../App'
-import { TOCDataContext } from '../pages/PageShell'
+import { useDemo } from './DemoContext'
 
 /**
  * @zh 目录组件。
- * 唯一调用核心库 useActiveScroll 的地方，负责目录高亮与点击滚动。
+ * 消费 DemoContext 中唯一一次 useActiveScroll 的返回值，负责目录高亮与点击滚动。
  * @en Table-of-contents component.
- * The only place that calls the core useActiveScroll; handles TOC highlighting and click-to-scroll.
+ * Consumes the return values of the single useActiveScroll call from DemoContext;
+ * handles TOC highlighting and click-to-scroll.
  */
 export function TOC() {
-	const tocData = useContext(TOCDataContext)
-	const radios = useContext(DemoRadiosContext)
-	if (!tocData || !radios) throw new Error('TOC must be used within providers')
 	const { t } = useTranslation()
-
 	const {
 		menuItems,
-		targets,
-		containerRef,
-		direction = 'vertical',
-		overlay = 0,
-		hash = 'off',
-		edges,
-		mediaQuery,
-		offset,
-	} = tocData
-	const { clickType, scrollBehavior } = radios
-
-	// @zh 稳定 options 对象引用，避免核心库 useEffect 因引用变化反复清理激活态。
-	// @en Stabilize the options object reference so the core library's useEffect does not repeatedly clear the active state on reference changes.
-	const offsetToStart = typeof offset === 'number' ? offset : offset?.toStart
-	const offsetToEnd = typeof offset === 'number' ? offset : offset?.toEnd
-	const options = useMemo(
-		() => ({
-			root: containerRef,
-			direction,
-			overlay,
-			hash,
-			edges,
-			mediaQuery,
-			offset,
-		}),
-		[
-			containerRef,
-			direction,
-			overlay,
-			hash,
-			mediaQuery,
-			edges?.first,
-			edges?.last,
-			offsetToStart,
-			offsetToEnd,
-		],
-	)
-
-	// @zh ====== 唯一一处调用核心包 Hook ======
-	// @en ====== The single place that calls the core package hook ======
-	const { activeIndex, activeId, setActive, isActive } = useActiveScroll(targets, options)
+		rootEl,
+		effectiveOverlay: overlay,
+		activeId,
+		activeIndex,
+		isActive,
+		setActive,
+		config,
+	} = useDemo()
+	const { direction, clickType, scrollBehavior } = config
 
 	const navRef = useRef<HTMLElement>(null)
 
@@ -95,8 +56,8 @@ export function TOC() {
 		// When positioning by element the animation library animates both axes, which would cause an unexpected vertical jump in window scenarios;
 		// leave room for the fixed overlay when scrolling into position.
 		if (direction === 'horizontal') {
-			if (containerRef?.current) {
-				const container = containerRef.current
+			if (rootEl) {
+				const container = rootEl
 				const desired
 					= container.scrollLeft
 					+ target.getBoundingClientRect().left
@@ -118,7 +79,7 @@ export function TOC() {
 		}
 
 		animateScrollTo(target, {
-			elementToScroll: containerRef?.current ?? window,
+			elementToScroll: rootEl ?? window,
 			...animateOptions,
 			// @zh 滚动定位时为固定遮挡物留出空间 @en Leave room for the fixed overlay when scrolling into position
 			verticalOffset: -overlay,
@@ -126,7 +87,7 @@ export function TOC() {
 	}
 
 	function nativeScroll(id: string) {
-		setActive(id) // @zh 同样通知核心包，再由浏览器执行 hash 滚动 @en Also notify the core package, then let the browser perform the hash scroll
+		setActive(id) // @zh 同样通知核心包，再由浏览器执行滚动 @en Also notify the core package, then let the browser perform the scroll
 		const target = document.getElementById(id)
 		target?.scrollIntoView({
 			behavior: clickType === 'custom' ? 'auto' : (scrollBehavior as ScrollBehavior),

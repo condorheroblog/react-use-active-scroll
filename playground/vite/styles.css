@@ -61,12 +61,12 @@ body {
 }
 
 /**
- * @zh 滚动行为由 DemoControls 根据 native / custom 点击类型与 smooth / auto
+ * @zh 滚动行为由 DemoProvider 根据配置面板的 native / custom 点击类型与 smooth / auto
  * 选项动态写入 --ScrollBehavior：窗口滚动作用于 <html>；
  * 容器滚动场景需给滚动容器本身加 .scroll-behavior-dynamic。
- * @en The scroll behavior is written dynamically to --ScrollBehavior by DemoControls based on
- * the native / custom click type and the smooth / auto option: window scrolling applies to <html>;
- * for container scrolling, add .scroll-behavior-dynamic to the scroll container itself.
+ * @en The scroll behavior is written dynamically to --ScrollBehavior by DemoProvider based on
+ * the panel's native / custom click type and the smooth / auto option: window scrolling applies
+ * to <html>; for container scrolling, add .scroll-behavior-dynamic to the scroll container itself.
  */
 :root {
 	--ScrollBehavior: smooth;

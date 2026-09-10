@@ -1,22 +1,22 @@
-import { DemoControls } from './DemoControls'
+import { ConfigPanel } from './ConfigPanel'
 import { TOC } from './TOC'
+import type { UpdateConfig } from '../types'
 
 interface SidebarProps {
-	extraControls?: React.ReactNode
+	update: UpdateConfig
 }
 
 /**
- * @zh 目录侧边栏内容。
+ * @zh 侧边栏内容：目录高亮 + 统一配置面板。
  * 同时用于桌面端侧边栏与移动端抽屉内部。
- * @en TOC sidebar content.
+ * @en Sidebar content: TOC highlight + the unified configuration panel.
  * Used both for the desktop sidebar and inside the mobile drawer.
  */
-export function Sidebar({ extraControls }: SidebarProps) {
+export function Sidebar({ update }: SidebarProps) {
 	return (
-		<div className="space-y-6">
-			<DemoControls />
-			{extraControls && <div className="space-y-3">{extraControls}</div>}
+		<div className="space-y-4">
 			<TOC />
+			<ConfigPanel update={update} />
 		</div>
 	)
 }

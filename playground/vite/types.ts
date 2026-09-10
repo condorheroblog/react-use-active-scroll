@@ -14,60 +14,59 @@ export interface MenuItem {
 	href: string
 }
 
-export interface DemoRadios {
-	scrollBehavior: "smooth" | "auto"
-	setScrollBehavior: (value: "smooth" | "auto") => void
-	clickType: "native" | "custom"
-	setClickType: (value: "native" | "custom") => void
-}
+/** @zh 滚动方向，对应核心包 direction 选项 @en Scroll direction, corresponding to the core direction option */
+export type Direction = "vertical" | "horizontal";
 
-export interface DemoButtons {
-	shiftSection: () => void
-	pushSection: () => void
-}
+/** @zh 滚动根模式：window（窗口滚动，root 缺省）或 container（容器滚动，root 指向容器） @en Scroll root mode: window (root omitted) or container (root points to the container) */
+export type RootMode = "window" | "container";
 
-/**
- * @zh 传递给核心包 useActiveScroll 的演示配置。
- * 包含所有选项，页面按需透传。
- * @en Demo config passed to the core useActiveScroll.
- * Contains all options; pages pass them through as needed.
- */
-export interface TOCData {
-	menuItems: MenuItem[]
-	/** @zh 演示应用透传给核心包 useActiveScroll 的目标集合 @en Targets passed through to the core useActiveScroll by the demo */
-	targets: string[] | HTMLElement[]
-	/** @zh 容器滚动场景下，演示应用持有的容器 ref @en Container ref held by the demo for container-scroll scenarios */
-	containerRef?: React.RefObject<HTMLElement | null>
-	/** @zh 滚动方向，透传给核心包 direction 选项 @en Scroll direction, passed through to the core direction option */
-	direction?: "vertical" | "horizontal"
-	/** @zh 沿滚动轴起点一侧固定遮挡物尺寸，透传给核心包 overlay 选项 @en Size of the fixed overlay on the start side of the scroll axis, passed to the core overlay option */
-	overlay?: number
-	/** @zh URL hash 同步方式 @en URL hash sync mode */
-	hash?: "off" | "replace" | "push"
-	/** @zh 边缘目标（首个/末个）的激活策略 @en Activation strategy for edge targets (first/last) */
-	edges?: { first?: boolean | number, last?: boolean | number }
-	/** @zh CSS 媒体查询，仅在查询匹配期间启用监听；未传或非法时始终启用 @en CSS media query; listeners are enabled only while it matches, and stay always enabled when omitted or invalid */
-	mediaQuery?: string
-	/** @zh 滚动边界偏移，数字形式同时应用于两个方向 @en Scroll boundary offset; a number applies to both directions */
-	offset?: number | { toStart?: number, toEnd?: number }
-}
+/** @zh URL hash 同步方式，对应核心包 hash 选项 @en URL hash sync mode, corresponding to the core hash option */
+export type HashMode = "off" | "replace" | "push";
+
+/** @zh 目录点击滚动方式（演示层行为，非核心包配置）：native 浏览器原生 / custom JS 动画 @en TOC click-scroll method (demo-level behavior, not a core option): native browser / custom JS animation */
+export type ClickType = "native" | "custom";
+
+/** @zh 原生滚动行为，对应 CSS scroll-behavior @en Native scroll behavior, corresponding to CSS scroll-behavior */
+export type ScrollBehaviorMode = "smooth" | "auto";
 
 /**
- * @zh EdgeBoundary 页面使用的本地偏移状态。
- * @en Local offset state used by the EdgeBoundary page.
+ * @zh 边缘激活策略模式：
+ * - force：传 true，到达滚动起点/终点时强制激活首/尾目标
+ * - number：传数字，关闭强制激活并允许"无激活"，按距离提前/延后判定
+ * @en Edge activation strategy mode:
+ * - force: pass true, force-activate the first/last target at the scroll start/end
+ * - number: pass a number, disable forced activation, allow "no active", judge by distance
  */
-export interface EdgeBoundaryOptions {
-	edgeFirst: number
-	edgeLast: number
+export type EdgeMode = "force" | "number";
+
+/**
+ * @zh 统一演示页的全部配置状态。
+ * 核心包配置项（direction / root / overlay / edges / offset / mediaQuery / hash）
+ * 与演示层行为（点击滚动方式、目标集合增删）统一收进配置面板。
+ * @en All configuration state for the unified demo page.
+ * Core options (direction / root / overlay / edges / offset / mediaQuery / hash)
+ * and demo-level behavior (click-scroll method, target set mutations) are all
+ * collected into the configuration panel.
+ */
+export interface DemoConfig {
+	direction: Direction
+	rootMode: RootMode
+	/** @zh 是否渲染演示用固定遮挡物并启用 overlay 选项 @en Whether to render the demo fixed overlay and enable the overlay option */
+	overlayEnabled: boolean
+	/** @zh 演示遮挡物尺寸（纵向为高度，横向为宽度） @en Demo overlay size (height for vertical, width for horizontal) */
+	overlaySize: number
+	edgesFirstMode: EdgeMode
+	edgesFirstValue: number
+	edgesLastMode: EdgeMode
+	edgesLastValue: number
 	offsetToStart: number
 	offsetToEnd: number
+	mediaQueryEnabled: boolean
+	mediaQuery: string
+	hash: HashMode
+	clickType: ClickType
+	scrollBehavior: ScrollBehaviorMode
 }
 
-/**
- * @zh Edges 页面使用的本地开关状态。
- * @en Local toggle state used by the Edges page.
- */
-export interface EdgesOptions {
-	first: boolean
-	last: boolean
-}
+/** @zh 配置更新函数 @en Config update function */
+export type UpdateConfig = <K extends keyof DemoConfig>(key: K, value: DemoConfig[K]) => void;
