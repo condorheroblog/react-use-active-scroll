@@ -7,27 +7,33 @@ const GITHUB_URL = 'https://github.com/condorheroblog/react-use-active-scroll'
 
 /**
  * @zh 顶部导航栏。
- * - fixed 定位：纵向滚动常驻顶部；窗口横向滚动演示时 sticky 无法水平固定
- *   （sticky 的水平可移动范围受包含块宽度限制，永远为 0），只有 fixed 才能锚定视口。
+ * - fixed 定位：纵向滚动常驻顶部；窗口横向滚动（horizontal/Window 演示）时
+ *   sticky 无法水平固定（sticky 的水平可移动范围受包含块宽度限制，永远为 0），
+ *   只有 fixed 才能锚定视口。
  * - fixed 不占文档流，渲染等高占位保持内容布局：
  *   12px padding * 2 + 34px 内容行 + 1px 边框 = 59px。
- * - 滚动方向（纵向 / 横向）等全部演示配置已收进右侧配置面板，顶部不再保留分组导航；
- *   右侧控制区从左到右依次为：GitHub 图标、语言切换按钮、主题切换按钮。
+ * - 移动端导航可横向滚动；右侧控制区从左到右依次为：
+ *   GitHub 图标、语言切换按钮、主题切换按钮。
+ * - 主导航按滚动方向分组（纵向 / 横向），子演示由 SectionNav 提供。
  * @en Top navigation bar.
  * - fixed positioning: stays at the top during vertical scrolling; during window horizontal
- *   scrolling sticky cannot pin horizontally (sticky's horizontal travel range is bounded by
- *   the containing block width and is always 0), so only fixed anchors to the viewport.
+ *   scrolling (the horizontal/Window demo) sticky cannot pin horizontally (sticky's horizontal
+ *   travel range is bounded by the containing block width and is always 0), so only fixed anchors to the viewport.
  * - fixed is out of flow, so an equal-height spacer is rendered to preserve layout:
  *   12px padding * 2 + 34px content row + 1px border = 59px.
- * - All demo options, including scroll direction (Vertical / Horizontal), live in the
- *   right-side configuration panel, so no group navigation remains in the header;
- *   the right-side controls are, from left to right: a GitHub icon, a language toggle
- *   button, and a theme toggle button.
+ * - The nav is horizontally scrollable on mobile; the right-side controls are, from left to right:
+ *   a GitHub icon, a language toggle button, and a theme toggle button.
+ * - The main nav is grouped by scroll direction (Vertical / Horizontal); sub-demos come from SectionNav.
  */
 export function Header() {
 	const { toggleTheme } = useTheme()
 	const { toggleLanguage } = useLanguage()
 	const { t } = useTranslation()
+
+	const routes = [
+		{ path: '/legacy/vertical', label: t('nav.vertical') },
+		{ path: '/legacy/horizontal', label: t('nav.horizontal') },
+	]
 
 	return (
 		<>
@@ -36,31 +42,38 @@ export function Header() {
 
 			<nav className="fixed inset-x-0 top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
 				<div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-					{/* @zh 品牌图标：点击回到演示页顶部 @en Brand icon: click to return to the demo page */}
-						<Link to="/" className="shrink-0">
-							<img
-								src={`${import.meta.env.BASE_URL}logo.svg`}
-								alt="react-use-active-scroll"
-								className="h-8 w-8"
-							/>
-						</Link>
+					{/* @zh 品牌图标：点击跳转首页 @en Brand icon: click to go home */}
+					<Link to="/" className="hidden shrink-0 sm:block">
+						<img
+							src={`${import.meta.env.BASE_URL}logo.svg`}
+							alt="react-use-active-scroll"
+							className="h-8 w-8"
+						/>
+					</Link>
 
-						{/* @zh 导航：旧版演示页链接 @en Nav: legacy demo link */}
-						<div className="flex-1 pl-4">
-							<NavLink
-								to="/legacy/vertical"
-								className={({ isActive }) =>
-									`whitespace-nowrap text-sm transition-colors ${
-										isActive ? 'font-semibold text-accent' : 'text-muted hover:text-fg'
-									}`
-								}
-							>
-								Legacy
-							</NavLink>
+					{/* @zh 导航链接：移动端横向滚动 @en Nav links: horizontally scrollable on mobile */}
+					<div className="flex-1 overflow-x-auto pr-4 sm:flex-none">
+						<div className="flex gap-5 text-sm">
+							{routes.map(route => (
+								<NavLink
+									key={route.path}
+									to={route.path}
+									className={({ isActive }) =>
+										`whitespace-nowrap transition-colors ${
+											isActive
+												? 'font-semibold text-accent'
+												: 'text-muted hover:text-fg'
+										}`
+									}
+								>
+									{route.label}
+								</NavLink>
+							))}
 						</div>
+					</div>
 
-						{/* @zh 控制区：GitHub 图标 + 语言切换 + 主题切换 @en Controls: GitHub icon + language toggle + theme toggle */}
-					<div className="flex items-center gap-1">
+					{/* @zh 控制区：GitHub 图标 + 语言切换 + 主题切换 @en Controls: GitHub icon + language toggle + theme toggle */}
+					<div className="ml-4 flex items-center gap-1">
 						<a
 							href={GITHUB_URL}
 							target="_blank"

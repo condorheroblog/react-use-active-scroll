@@ -365,7 +365,7 @@ function EdgeRow({
 	numberLabel: string
 }) {
 	return (
-		<div className="space-y-1.5">
+		<div className="space-y-1.5 my-2">
 			<div className="flex items-center justify-between gap-2">
 				<span className="font-mono text-[11px] text-fg">{title}</span>
 				<Segmented

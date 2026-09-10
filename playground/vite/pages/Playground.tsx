@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQueryStates, parseAsBoolean, parseAsInteger, parseAsString, parseAsStringLiteral } from 'nuqs'
 import { DemoProvider, useDemo } from '../components/DemoContext'
 import { PageLayout } from '../components/PageLayout'
 import { ContainerScanLine } from '../components/ScanLine'
@@ -8,6 +9,30 @@ import type { DemoConfig, Section, UpdateConfig } from '../types'
 
 /** @zh 应用顶部固定导航栏高度（见 Header 注释），窗口纵向滚动时自动计入 overlay @en Height of the fixed app header (see Header notes), automatically included in overlay for vertical window scrolling */
 const HEADER_HEIGHT = 59
+
+/**
+ * @zh nuqs URL 查询参数解析器：每个配置项对应一个 URL 参数，带默认值。
+ * 刷新页面或分享 URL 后配置依然保留。
+ * @en nuqs URL query-param parsers: each config field maps to a URL parameter with a default.
+ * The configuration persists across refreshes and is shareable via URL.
+ */
+const configParsers = {
+	direction: parseAsStringLiteral(['vertical', 'horizontal'] as const).withDefault('vertical'),
+	rootMode: parseAsStringLiteral(['window', 'container'] as const).withDefault('window'),
+	overlayEnabled: parseAsBoolean.withDefault(false),
+	overlaySize: parseAsInteger.withDefault(120),
+	edgesFirstMode: parseAsStringLiteral(['force', 'number'] as const).withDefault('force'),
+	edgesFirstValue: parseAsInteger.withDefault(200),
+	edgesLastMode: parseAsStringLiteral(['force', 'number'] as const).withDefault('force'),
+	edgesLastValue: parseAsInteger.withDefault(300),
+	offsetToStart: parseAsInteger.withDefault(0),
+	offsetToEnd: parseAsInteger.withDefault(0),
+	mediaQueryEnabled: parseAsBoolean.withDefault(false),
+	mediaQuery: parseAsString.withDefault('(min-width: 768px)'),
+	hash: parseAsStringLiteral(['off', 'replace', 'push'] as const).withDefault('off'),
+	clickType: parseAsStringLiteral(['native', 'custom'] as const).withDefault('native'),
+	scrollBehavior: parseAsStringLiteral(['smooth', 'auto'] as const).withDefault('smooth'),
+}
 
 /**
  * @zh 统一演示页（全应用唯一示例）。
@@ -25,31 +50,17 @@ export function Playground() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
 	const targets = useMemo(() => sections.map(s => s.id), [sections])
 
-	const [config, setConfig] = useState<DemoConfig>({
-		direction: 'vertical',
-		rootMode: 'window',
-		overlayEnabled: false,
-		overlaySize: 120,
-		edgesFirstMode: 'force',
-		edgesFirstValue: 200,
-		edgesLastMode: 'force',
-		edgesLastValue: 300,
-		offsetToStart: 0,
-		offsetToEnd: 0,
-		mediaQueryEnabled: false,
-		mediaQuery: '(min-width: 768px)',
-		hash: 'off',
-		clickType: 'native',
-		scrollBehavior: 'smooth',
-	})
+	// @zh 配置状态由 nuqs 管理，URL 可分享、刷新后保留
+	// @en Config state managed by nuqs; URL is shareable and persists on refresh
+	const [config, setConfig] = useQueryStates(configParsers)
 
 	// @zh 容器滚动模式下挂载的滚动容器元素；窗口模式为 null（由 ref 卸载自动置空）。
 	// @en The scroll container element mounted in container mode; null in window mode (auto-nulled on ref unmount).
 	const [rootEl, setRootEl] = useState<HTMLDivElement | null>(null)
 
 	const update = useCallback<UpdateConfig>(
-		(key, value) => setConfig(prev => ({ ...prev, [key]: value })),
-		[],
+		(key, value) => setConfig({ [key]: value } as Partial<DemoConfig>),
+		[setConfig],
 	)
 
 	const horizontal = config.direction === 'horizontal'
@@ -61,6 +72,10 @@ export function Playground() {
 	// @zh 窗口横向滚动时侧边栏需 fixed 常驻（sticky 无法水平固定）。
 	// @en In horizontal window mode the sidebar must be fixed (sticky cannot pin horizontally).
 	const fixedSidebar = horizontal && windowMode
+	// @zh edges 为数字模式时才显示尾部留白观察区（只有此时才有"无激活"/延迟取消高亮可观察）。
+	// @en Show the trailing observation area only when edges are in number mode
+	// (only then is there "no active" / late deactivation to observe).
+	const edgesAreNumbers = config.edgesFirstMode === 'number' || config.edgesLastMode === 'number'
 
 	return (
 		<DemoProvider
@@ -79,6 +94,7 @@ export function Playground() {
 					windowMode={windowMode}
 					demoOverlay={demoOverlay}
 					effectiveOverlay={effectiveOverlay}
+					edgesAreNumbers={edgesAreNumbers}
 					setRootEl={setRootEl}
 				/>
 			</PageLayout>
@@ -97,6 +113,7 @@ function DemoContent({
 	windowMode,
 	demoOverlay,
 	effectiveOverlay,
+	edgesAreNumbers,
 	setRootEl,
 }: {
 	sections: Section[]
@@ -104,6 +121,7 @@ function DemoContent({
 	windowMode: boolean
 	demoOverlay: number
 	effectiveOverlay: number
+	edgesAreNumbers: boolean
 	setRootEl: (el: HTMLDivElement | null) => void
 }) {
 	const { t } = useTranslation()
@@ -145,7 +163,7 @@ function DemoContent({
 							</section>
 						))}
 					</div>
-					<ObservationArea className="mt-16 h-[120vh]" />
+					{edgesAreNumbers && <ObservationArea className="mt-16 h-[120vh]" />}
 				</div>
 			</>
 		)
@@ -186,7 +204,7 @@ function DemoContent({
 								</section>
 							))}
 						</div>
-						<ObservationArea className="mt-16 h-[120vh]" />
+						{edgesAreNumbers && <ObservationArea className="mt-16 h-[120vh]" />}
 					</div>
 					<ContainerScanLine />
 				</div>
@@ -228,7 +246,7 @@ function DemoContent({
 							<p className="leading-relaxed text-muted">{section.text}</p>
 						</section>
 					))}
-					<ObservationArea className="h-[320px] w-[70vw] max-w-[560px] flex-none pt-10" />
+					{edgesAreNumbers && <ObservationArea className="h-[320px] w-[70vw] max-w-[560px] flex-none pt-10" />}
 				</div>
 			</>
 		)
@@ -267,7 +285,7 @@ function DemoContent({
 							</div>
 						</section>
 					))}
-					<ObservationArea className="h-full w-[70vw] max-w-[560px] flex-none pt-10" />
+					{edgesAreNumbers && <ObservationArea className="h-full w-[70vw] max-w-[560px] flex-none pt-10" />}
 				</div>
 				<ContainerScanLine />
 			</div>

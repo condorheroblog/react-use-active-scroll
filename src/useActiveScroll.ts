@@ -427,6 +427,18 @@ export function useActiveScroll(
 		if (!matchMedia)
 			return;
 
+		// @zh root / direction 运行时切换时，主滚动监听 effect 的依赖不含 root，
+		// 仅靠 isScrollIdle 的 false→true 跳变才会重新绑定到新容器；这里先复位为 false，
+		// 让随后 setMountIdle 的 idle 检测再次把它置 true，从而触发主监听 effect 重新挂载到
+		// 新滚动根（窗口↔容器切换时尤其关键，否则监听仍挂在旧根上、目录不激活）。
+		// @en When root / direction switches at runtime, the main scroll-listener effect
+		// (whose deps omit root) only re-binds to the new container via the false→true
+		// transition of isScrollIdle; resetting it to false here lets the subsequent
+		// setMountIdle idle-detection flip it back to true, retriggering the listener
+		// effect to re-attach to the new scroll root (critical for window↔container
+		// switches, otherwise the listener stays on the old root and the TOC never activates).
+		setIsScrollIdle(false);
+
 		const timer = window.setTimeout(() => {
 			prepareTargets(
 				userTargetsRef.current,
