@@ -46,7 +46,7 @@ export default function HomePage() {
 									fontWeight: isActive(s.id) ? "bold" : "normal",
 									color: isActive(s.id)
 										? "#00adb5"
-										: "rgba(255, 255, 255, 0.64)",
+										: "rgba(0, 0, 0, 0.5)",
 								}}
 							>
 								{s.title}
