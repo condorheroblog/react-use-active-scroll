@@ -78,12 +78,16 @@ export interface UseActiveScrollOptions {
 	overlay?: number
 
 	/**
-	 * @zh 仅在视口宽度大于等于此值时启用监听。
-	 * @en Enable listeners only when the viewport width is greater than or
-	 * equal to this value.
-	 * @default 0
+	 * @zh CSS 媒体查询，如 '(min-width: 768px)'。
+	 * 传入且语法合法时，仅在查询匹配期间启用监听；语法非法或未传时
+	 * 门控不生效，始终启用监听。
+	 * @en CSS media query, e.g. '(min-width: 768px)'.
+	 * When provided and syntactically valid, listeners are enabled only while
+	 * the query matches; an invalid or missing query disables this gating and
+	 * listeners stay always enabled.
+	 * @default ''
 	 */
-	minWidth?: number
+	mediaQuery?: string
 
 	/**
 	 * @zh 滚动过程中同步 URL hash 的方式。

@@ -3,13 +3,15 @@ import { useTranslation } from 'react-i18next'
 import { PageShell } from '../PageShell'
 import { useFakeData } from '../../hooks/useFakeData'
 
-const MIN_WIDTH = 768
+const MEDIA_QUERY = '(min-width: 768px)'
 
 /**
  * @zh Responsive 页面。
- * 演示 minWidth 选项：仅在视口宽度 >= 768px 时启用滚动监听。
+ * 演示 mediaQuery 选项：仅在 CSS 媒体查询 '(min-width: 768px)' 匹配
+ * （视口宽度 >= 768px）时启用滚动监听。
  * @en Responsive page.
- * Demonstrates the minWidth option: scroll listening is enabled only when the viewport width >= 768px.
+ * Demonstrates the mediaQuery option: scroll listening is enabled only while
+ * the CSS media query '(min-width: 768px)' matches (viewport width >= 768px).
  */
 export function Responsive() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
@@ -18,14 +20,14 @@ export function Responsive() {
 
 	return (
 		<PageShell
-			tocData={{ menuItems, targets, minWidth: MIN_WIDTH }}
+			tocData={{ menuItems, targets, mediaQuery: MEDIA_QUERY }}
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-2xl">
 				<div className="mb-8 rounded-md border border-border bg-card p-4 text-sm">
-					<div className="mb-2 font-medium text-fg">minWidth: {MIN_WIDTH}px</div>
+					<div className="mb-2 font-medium text-fg">mediaQuery: '{MEDIA_QUERY}'</div>
 					<p className="text-muted">
-						{t('responsive.desc', { px: MIN_WIDTH })}
+						{t('responsive.desc', { query: MEDIA_QUERY })}
 					</p>
 				</div>
 

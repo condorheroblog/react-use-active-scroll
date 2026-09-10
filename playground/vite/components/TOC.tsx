@@ -27,7 +27,7 @@ export function TOC() {
 		overlay = 0,
 		hash = 'off',
 		edges,
-		minWidth,
+		mediaQuery,
 		offset,
 	} = tocData
 	const { clickType, scrollBehavior } = radios
@@ -43,7 +43,7 @@ export function TOC() {
 			overlay,
 			hash,
 			edges,
-			minWidth,
+			mediaQuery,
 			offset,
 		}),
 		[
@@ -51,7 +51,7 @@ export function TOC() {
 			direction,
 			overlay,
 			hash,
-			minWidth,
+			mediaQuery,
 			edges?.first,
 			edges?.last,
 			offsetToStart,

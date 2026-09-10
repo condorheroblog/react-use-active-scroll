@@ -4,15 +4,17 @@ import { PageShell } from '../PageShell'
 import { HorizontalSections } from '../../components/HorizontalSections'
 import { useFakeData } from '../../hooks/useFakeData'
 
-const MIN_WIDTH = 768
+const MEDIA_QUERY = '(min-width: 768px)'
 
 /**
  * @zh 横向 Responsive 页面。
- * 演示 minWidth 选项在横向滚动下的行为：
- * 仅在视口宽度 >= 768px 时启用横向滚动监听。
+ * 演示 mediaQuery 选项在横向滚动下的行为：
+ * 仅在 CSS 媒体查询 '(min-width: 768px)' 匹配（视口宽度 >= 768px）时
+ * 启用横向滚动监听。
  * @en Horizontal Responsive page.
- * Demonstrates the behavior of the minWidth option under horizontal scrolling:
- * horizontal scroll listening is enabled only when the viewport width >= 768px.
+ * Demonstrates the behavior of the mediaQuery option under horizontal
+ * scrolling: horizontal scroll listening is enabled only while the CSS media
+ * query '(min-width: 768px)' matches (viewport width >= 768px).
  */
 export function Responsive() {
 	const { sections, menuItems, pushSection, shiftSection } = useFakeData()
@@ -27,15 +29,15 @@ export function Responsive() {
 				targets,
 				containerRef,
 				direction: 'horizontal',
-				minWidth: MIN_WIDTH,
+				mediaQuery: MEDIA_QUERY,
 			}}
 			demoButtons={{ pushSection, shiftSection }}
 		>
 			<div className="mx-auto max-w-4xl">
 				<div className="mb-4 rounded-md border border-border bg-card p-4 text-sm">
-					<div className="mb-2 font-medium text-fg">minWidth: {MIN_WIDTH}px</div>
+					<div className="mb-2 font-medium text-fg">mediaQuery: '{MEDIA_QUERY}'</div>
 					<p className="text-muted">
-						{t('responsiveH.desc', { px: MIN_WIDTH })}
+						{t('responsiveH.desc', { query: MEDIA_QUERY })}
 					</p>
 				</div>
 

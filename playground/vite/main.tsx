@@ -20,6 +20,7 @@ import { Edges as HorizontalEdges } from './pages/horizontal/Edges'
 import { Responsive as HorizontalResponsive } from './pages/horizontal/Responsive'
 import { ApiShowcase as HorizontalApiShowcase } from './pages/horizontal/ApiShowcase'
 import { Hash as HorizontalHash } from './pages/horizontal/Hash'
+import { NotFound } from './pages/NotFound'
 import './i18n' // @zh 初始化 i18next（默认英文，可在 Header 切换为中文） @en Initialize i18next (English by default, switchable to Chinese from the Header)
 import './styles.css'
 
@@ -60,6 +61,9 @@ const router = createBrowserRouter(
 						{ path: 'hash', element: <HorizontalHash /> },
 					],
 				},
+				// @zh 兜底路由：未匹配的路径展示 404 页面
+				// @en Catch-all route: unmatched paths show the 404 page
+				{ path: '*', element: <NotFound /> },
 			],
 		},
 	],

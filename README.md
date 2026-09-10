@@ -110,7 +110,7 @@ export function Sidebar() {
 		direction: "vertical", // scroll axis: "vertical" | "horizontal"
 		root: null, // scrolling element, window root by default
 		overlay: 0, // fixed overlay size along the scroll axis, in px
-		minWidth: 0, // only track when viewport width >= minWidth
+		mediaQuery: "", // CSS media query gate, e.g. "(min-width: 768px)"
 		hash: "off", // sync URL hash: "off" | "replace" | "push"
 		edges: { first: true, last: true }, // edge activation strategy
 		offset: 0, // boundary offset, number or { toStart, toEnd }
@@ -128,7 +128,7 @@ export function Sidebar() {
 | offset    | `number \| Offset`                                       | `{ toStart: 0, toEnd: 0 }`   | Boundary offset in px per scroll direction (`toStart` when scrolling towards the start, `toEnd` towards the end). A single number applies to both. Tweak to "anticipate" or "delay" target detection. |
 | root      | `HTMLElement \| null` \| `RefObject<HTMLElement \| null>` | null                         | Scrolling element. Set it only if your content **is not scrolled** by the window. If _null_, defaults to the document root.                                                        |
 | overlay   | `number`                                                 | 0                            | Size in px of any **CSS fixed** content overlapping the start of your scrolling area along the scroll axis — a fixed header (vertical) or a fixed side panel (horizontal). Must be paired with `scroll-margin-top` / `scroll-margin-left` on your targets. |
-| minWidth  | `number`                                                 | 0                            | Only enable listeners when the viewport is at least this wide. Useful when hiding the sidebar with `display: none` on small screens.                                               |
+| mediaQuery | `string`                                                | `''`                         | A CSS media query, e.g. `'(min-width: 768px)'`; listeners are enabled only while it matches the viewport. Useful when hiding the sidebar with `display: none` on small screens. An invalid query is ignored (with a console warning) and listeners stay always enabled; the same applies when it is omitted. |
 
 ## Return Value
 

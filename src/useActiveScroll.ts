@@ -10,6 +10,7 @@ import {
 	last,
 	MOUNT_IDLE_FRAMES,
 	prepareTargets,
+	resolveMediaQueryList,
 	resolveOptions,
 	resolveTargets,
 	SCROLLBAR_WIDTH,
@@ -46,14 +47,20 @@ export function useActiveScroll(
 	const [activeEl, setActiveElState] = useState<HTMLElement | null>(null);
 	const [isScrollIdle, setIsScrollIdle] = useState(false);
 	const [isScrollFromTarget, setIsScrollFromTarget] = useState(false);
-	// @zh 使用 useSyncExternalStore 同步 matchMedia 状态，避免在 useEffect 中直接 setState
-	// @en Sync matchMedia state via useSyncExternalStore to avoid calling setState directly in useEffect
+	// @zh 媒体查询门控：未传或语法非法时不创建 MediaQueryList，门控不生效（恒为通过）
+	// @en Media query gate: when omitted or syntactically invalid, no MediaQueryList is created and the gate is disabled (always passes)
 	const mql = useMemo(() => {
 		if (typeof window === "undefined")
 			return null;
-		return window.matchMedia(`(min-width: ${opts.minWidth}px)`);
-	}, [opts.minWidth]);
+		if (!opts.mediaQuery)
+			return null;
+		return resolveMediaQueryList(opts.mediaQuery);
+	}, [opts.mediaQuery]);
 
+	// @zh 使用 useSyncExternalStore 同步 matchMedia 状态，避免在 useEffect 中直接 setState；
+	// 无门控（mql 为 null）时恒为 true，即始终启用监听
+	// @en Sync matchMedia state via useSyncExternalStore to avoid calling setState directly in useEffect;
+	// without a gate (mql null) it stays true, i.e. listeners are always enabled
 	const matchMedia = useSyncExternalStore(
 		useCallback(
 			(callback: () => void) => {
@@ -64,8 +71,8 @@ export function useActiveScroll(
 			},
 			[mql],
 		),
-		() => mql?.matches ?? false,
-		() => false,
+		() => (mql ? mql.matches : true),
+		() => true,
 	);
 
 	// @zh 用 ref 镜像 activeEl，供未在依赖列表中的事件监听器读取最新值
@@ -461,8 +468,8 @@ export function useActiveScroll(
 		);
 	}, [userTargets, opts.root, opts.direction, matchMedia]);
 
-	// @zh 主滚动监听：仅在滚动空闲、满足宽度阈值且存在目标时注册
-	// @en Main scroll listener: registered only when scrolling is idle, the width threshold is met, and targets exist
+	// @zh 主滚动监听：仅在滚动空闲、媒体查询门控通过且存在目标时注册
+	// @en Main scroll listener: registered only when scrolling is idle, the media query gate passes, and targets exist
 	useEffect(() => {
 		if (typeof window === "undefined")
 			return;

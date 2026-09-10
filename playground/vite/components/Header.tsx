@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router'
+import { Link, NavLink } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../hooks/useTheme'
 import { useLanguage } from '../hooks/useLanguage'
@@ -42,10 +42,14 @@ export function Header() {
 
 			<nav className="fixed inset-x-0 top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
 				<div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-					{/* @zh 品牌标题 @en Brand title */}
-					<div className="hidden text-sm font-semibold text-fg sm:block">
-						react-use-active-scroll
-					</div>
+					{/* @zh 品牌图标：点击跳转首页 @en Brand icon: click to go home */}
+					<Link to="/" className="hidden shrink-0 sm:block">
+						<img
+							src={`${import.meta.env.BASE_URL}logo.svg`}
+							alt="react-use-active-scroll"
+							className="h-8 w-8"
+						/>
+					</Link>
 
 					{/* @zh 导航链接：移动端横向滚动 @en Nav links: horizontally scrollable on mobile */}
 					<div className="flex-1 overflow-x-auto pr-4 sm:flex-none">

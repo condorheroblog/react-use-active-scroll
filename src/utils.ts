@@ -11,7 +11,7 @@ export const defaultOptions: ResolvedOptions = {
 	root: null,
 	edges: { first: true, last: true },
 	overlay: 0,
-	minWidth: 0,
+	mediaQuery: "",
 	hash: "off",
 	offset: { toStart: 0, toEnd: 0 },
 };
@@ -72,11 +72,12 @@ function resolveEdge(value: boolean | number | undefined, fallback: true | numbe
 /**
  * @zh 将用户选项与默认值合并为完整配置。
  * 注意：必须逐字段使用 ?? 合并，浅展开（...options）会让显式传入的
- * undefined 覆盖默认值，例如 minWidth: undefined 会生成非法媒体查询。
+ * undefined 覆盖默认值，例如 mediaQuery: undefined 会覆盖为 undefined
+ * 而非默认空串。
  * @en Merges user options with defaults into a full config.
  * Note: each field must be merged with ??; a shallow spread (...options)
  * would let an explicitly passed undefined override the default — e.g.
- * minWidth: undefined produces an invalid media query.
+ * mediaQuery: undefined would override the default empty string.
  */
 export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOptions {
 	return {
@@ -87,7 +88,7 @@ export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOp
 			last: resolveEdge(options.edges?.last, defaultOptions.edges.last),
 		},
 		overlay: options.overlay ?? defaultOptions.overlay,
-		minWidth: options.minWidth ?? defaultOptions.minWidth,
+		mediaQuery: options.mediaQuery ?? defaultOptions.mediaQuery,
 		hash: options.hash ?? defaultOptions.hash,
 		offset: typeof options.offset === "number"
 			? { toStart: options.offset, toEnd: options.offset }
@@ -96,6 +97,30 @@ export function resolveOptions(options: UseActiveScrollOptions = {}): ResolvedOp
 				toEnd: options.offset?.toEnd ?? defaultOptions.offset.toEnd,
 			},
 	};
+}
+
+/**
+ * @zh 校验媒体查询语法并创建 MediaQueryList。
+ * 浏览器会把非法查询归一化为 "not all"，据此识别语法错误：
+ * 非法查询返回 null（门控不生效，始终启用监听）并告警；
+ * 空白字符串视为未传，同样返回 null。
+ * @en Validates the media query syntax and creates a MediaQueryList.
+ * Browsers normalize an invalid query to "not all", which is used to detect
+ * syntax errors: an invalid query returns null (gating disabled, listeners
+ * stay always enabled) and warns; a blank string is treated as omitted and
+ * also returns null.
+ */
+export function resolveMediaQueryList(query: string): MediaQueryList | null {
+	if (!query.trim())
+		return null;
+
+	const mql = window.matchMedia(query);
+	if (mql.media === "not all") {
+		console.warn(`useActiveScroll: invalid mediaQuery "${query}" is ignored; listeners stay always enabled.`);
+		return null;
+	}
+
+	return mql;
 }
 
 /**

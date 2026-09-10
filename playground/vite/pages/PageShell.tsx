@@ -43,7 +43,7 @@ export function PageShell({ children, tocData, demoButtons, extraControls }: Pag
 		tocData.direction,
 		tocData.overlay,
 		tocData.hash,
-		tocData.minWidth,
+		tocData.mediaQuery,
 		tocData.edges?.first,
 		tocData.edges?.last,
 		offsetToStart,
