@@ -1,171 +1,88 @@
-import type { CSSProperties, ReactNode, RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
+import type { DebugLineInput, DebugOverlay, DebugOverlayConfig } from "scroll-active-toc";
 import type { ResolvedOptions } from "../types";
-import type { DebugLineInput } from "./lines";
-import { createElement, useEffect, useMemo, useState } from "react";
-import { computeDebugLines, groupLines } from "./lines";
-
-/**
- * @zh 调试覆盖层配色与层级（全部经 CSS 变量引用，带 fallback，不注入样式表）：
- * - --uas-debug-line：方向触发线颜色
- * - --uas-debug-edge：首尾边缘线颜色
- * - --uas-debug-bg：标签底色
- * - --uas-debug-z-index：覆盖层层级
- * @en Debug overlay colors and stacking (all referenced via CSS variables with
- * fallbacks; no stylesheet is injected):
- * - --uas-debug-line: directional trigger-line color
- * - --uas-debug-edge: first/last edge-line color
- * - --uas-debug-bg: label background
- * - --uas-debug-z-index: overlay stacking order
- */
-const LINE_COLOR = "var(--uas-debug-line, #22d3ee)";
-const EDGE_COLOR = "var(--uas-debug-edge, #f59e0b)";
-const LABEL_BG = "var(--uas-debug-bg, #ffffff)";
-const Z_INDEX = "var(--uas-debug-z-index, 9999)";
+import { createElement, useEffect, useRef } from "react";
+import { createDebugOverlay } from "scroll-active-toc";
 
 export interface DevtoolsProps extends DebugLineInput {
 	root: ResolvedOptions["root"]
 	/** @zh 是否显示文字标签 @en Whether to show text labels */
-	label: boolean
+	label?: boolean
 	/** @zh 覆盖层 wrapper 的附加 className @en Extra className on the overlay wrapper */
 	className?: string
 }
 
 /**
- * @zh 判断归一化 root 是否为窗口根；RefObject 形式读取其 current。
- * @en Determines whether the normalized root is the window root; reads
- * current for a RefObject.
+ * @zh 把 RefObject / 元素 / null 形式的 root 解析为实际容器元素。
+ * @en Resolves a RefObject / element / null root to the actual container
+ * element.
  */
-function resolveIsWindowRoot(root: DevtoolsProps["root"]): boolean {
-	if (root && typeof root === "object" && "current" in root)
-		return !((root as RefObject<HTMLElement | null>).current instanceof HTMLElement);
-	return !(root instanceof HTMLElement);
+function resolveRootElement(root: DevtoolsProps["root"]): HTMLElement | null {
+	if (root && typeof root === "object" && "current" in root) {
+		const current = (root as RefObject<HTMLElement | null>).current;
+		return current instanceof HTMLElement ? current : null;
+	}
+	return root instanceof HTMLElement ? root : null;
 }
 
 /**
- * @zh 触发线调试覆盖层。
- * 窗口滚动时 wrapper fixed 铺满视口；容器滚动时 absolute 铺满最近的
- * position: relative 祖先（即滚动容器的 border-box）。
- * 核心库构建链路不转换 JSX，故这里统一使用 createElement。
- * @en Trigger-line debug overlay.
- * The wrapper is fixed over the viewport for window scrolling, and absolute
- * over the nearest position: relative ancestor (the scroll container's
- * border-box) for container scrolling.
- * The library build does not transform JSX, so createElement is used
- * throughout.
+ * @zh 触发线调试覆盖层（React 适配）。
+ * 渲染与判定逻辑全部来自 scroll-active-toc 的命令式 createDebugOverlay，本组件只负责
+ * 挂载、按 props 更新与卸载。窗口滚动时覆盖层 fixed 铺满视口；容器滚动时
+ * absolute 铺满最近的 position: relative 祖先（即滚动容器的 border-box）。
+ * 外层 host 使用 display: contents，不产生额外盒子，因此覆盖层的定位
+ * 参照物与直接渲染 wrapper 时完全一致。
+ * @en Trigger-line debug overlay (React adapter).
+ * Rendering and evaluation come entirely from the imperative
+ * createDebugOverlay in scroll-active-toc; this component only mounts,
+ * updates on props and unmounts. The overlay is fixed over the viewport for window scrolling,
+ * and absolute over the nearest position: relative ancestor (the scroll
+ * container's border-box) for container scrolling. The host uses
+ * display: contents and generates no box, so the overlay's positioning
+ * context is identical to rendering the wrapper directly.
  */
-export function Devtools({ root, direction, overlay, edges, offset, label: showLabel, className = "" }: DevtoolsProps): ReactNode {
-	// @zh ref 形式的 root 可能在挂载后才拿到元素，挂载后与 root 变化时重新解析 @en A ref root may receive its element only after mount; re-resolve on mount and whenever root changes
-	const [isWindowRoot, setIsWindowRoot] = useState(() => resolveIsWindowRoot(root));
+export function Devtools({ root, direction, overlay, edges, offset, label = true, className = "" }: DevtoolsProps): ReactNode {
+	const hostRef = useRef<HTMLDivElement | null>(null);
+	const overlayRef = useRef<DebugOverlay | null>(null);
+
+	// @zh ref 形式的 root 可能在挂载后才拿到元素；effect 在每次渲染后执行，
+	// 确保覆盖层始终拿到最新容器并同步最新配置。
+	// @en A ref root may receive its element only after mount; the effect runs
+	// after every render to keep the overlay on the latest container and config.
 	useEffect(() => {
-		const next = resolveIsWindowRoot(root);
-		setIsWindowRoot(prev => (prev === next ? prev : next));
-	}, [root]);
+		const host = hostRef.current;
+		if (!host)
+			return;
 
-	const groups = useMemo(
-		() => groupLines(computeDebugLines({ direction, overlay, edges, offset } satisfies DebugLineInput)),
-		[direction, overlay, edges, offset],
-	);
+		const config: DebugOverlayConfig = {
+			root: resolveRootElement(root),
+			direction,
+			overlay,
+			edges,
+			offset,
+			label,
+			className,
+		};
 
-	const horizontal = direction === "horizontal";
-	const wrapperStyle: CSSProperties = {
-		position: isWindowRoot ? "fixed" : "absolute",
-		inset: 0,
-		// @zh z-index 走 CSS 变量，csstype 仅接受数字，需断言 @en z-index comes from a CSS variable; csstype only accepts numbers, so a cast is needed
-		zIndex: Z_INDEX as unknown as number,
-		pointerEvents: "none",
-		overflow: "hidden",
-	};
-
-	const chipStyle: CSSProperties = {
-		font: "10px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace",
-		whiteSpace: "nowrap",
-		padding: "1px 6px",
-		borderRadius: "2px",
-		backgroundColor: LABEL_BG,
-	};
-
-	const chip = (text: string, color: string, dash: string, extraStyle: CSSProperties): ReactNode =>
-		createElement(
-			"span",
-			{ style: { ...chipStyle, border: `2px ${dash} ${color}`, color, ...extraStyle } },
-			text,
-		);
-
-	const nodes = Array.from(groups.entries()).map(([pos, group]) => {
-		const isEdge = group.some(line => line.kind === "edge");
-		const color = isEdge ? EDGE_COLOR : LINE_COLOR;
-		const dash = isEdge ? "dotted" : "dashed";
-		const text = `${group.map(line => line.label).join(" / ")} · ${pos}px`;
-		const key = group.map(line => line.id).join("+");
-
-		// @zh pos 为负时触发线位于轴起点之外，改为在起点边缘固定标记牌 @en When pos is negative the line lies beyond the axis start; pin a marker to the start edge instead
-		if (pos < 0) {
-			if (horizontal) {
-				return createElement(
-					"div",
-					{
-						key,
-						style: { position: "absolute", left: 0, top: 0, padding: "4px" },
-					},
-					chip(`◀ ${text} off-screen`, color, dash, {}),
-				);
-			}
-			return createElement(
-				"div",
-				{
-					key,
-					style: {
-						position: "absolute",
-						left: 0,
-						right: 0,
-						top: 0,
-						display: "flex",
-						justifyContent: "flex-end",
-						padding: "4px 8px",
-					},
-				},
-				chip(`▲ ${text} off-screen`, color, dash, {}),
-			);
+		if (overlayRef.current) {
+			overlayRef.current.update(config);
 		}
-
-		if (horizontal) {
-			return createElement(
-				"div",
-				{
-					key,
-					style: {
-						position: "absolute",
-						top: 0,
-						bottom: 0,
-						left: `${pos}px`,
-						borderLeft: `2px ${dash} ${color}`,
-					},
-				},
-				showLabel ? chip(text, color, dash, { position: "absolute", top: "4px", left: "4px" }) : null,
-			);
+		else {
+			const instance = createDebugOverlay(config);
+			overlayRef.current = instance;
+			host.appendChild(instance.el);
 		}
-
-		return createElement(
-			"div",
-			{
-				key,
-				style: {
-					position: "absolute",
-					left: 0,
-					right: 0,
-					top: `${pos}px`,
-					borderTop: `2px ${dash} ${color}`,
-				},
-			},
-			showLabel
-				? chip(text, color, dash, { position: "absolute", right: "8px", top: 0, transform: "translateY(-50%)" })
-				: null,
-		);
 	});
 
-	return createElement(
-		"div",
-		{ className, style: wrapperStyle, ariaHidden: true },
-		nodes,
-	);
+	useEffect(() => () => {
+		overlayRef.current?.destroy();
+		overlayRef.current = null;
+	}, []);
+
+	// @zh 核心库构建链路不转换 JSX，故这里统一使用 createElement；
+	// host 仅作挂载点，display: contents 保证不产生额外定位盒子。
+	// @en The library build does not transform JSX, so createElement is used;
+	// the host is only a mount point, and display: contents ensures no extra
+	// positioning box is generated.
+	return createElement("div", { ref: hostRef, style: { display: "contents" } });
 }

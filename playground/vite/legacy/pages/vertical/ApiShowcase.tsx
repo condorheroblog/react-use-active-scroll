@@ -7,11 +7,11 @@ import { useFakeData } from '../../hooks/useFakeData'
 /**
  * @zh ApiShowcase 页面。
  * 集中展示 useActiveScroll 所有返回值：
- * - activeId、activeIndex、activeEl（DOM 引用）
+ * - activeId、activeIndex、activeElement（DOM 引用）
  * - isActive、setActive
  * @en ApiShowcase page.
  * Showcases all return values of useActiveScroll:
- * - activeId, activeIndex, activeEl (DOM reference)
+ * - activeId, activeIndex, activeElement (DOM reference)
  * - isActive, setActive
  */
 export function ApiShowcase() {
@@ -21,7 +21,7 @@ export function ApiShowcase() {
 
 	// @zh 在主内容区直接消费返回值，便于在 UI 中展示。
 	// @en Consume the return values directly in the main content area so they can be shown in the UI.
-	const { activeId, activeIndex, activeEl, isActive, setActive } = useActiveScroll(targets, {
+	const { activeId, activeIndex, activeElement, isActive, setActive } = useActiveScroll(targets, {
 		hash: 'replace',
 	})
 
@@ -44,8 +44,8 @@ export function ApiShowcase() {
 							<span className="font-mono text-fg">{activeIndex}</span>
 						</div>
 						<div>
-							<span className="block text-xs text-muted">activeEl.tagName</span>
-							<span className="font-mono text-fg">{activeEl?.tagName || '-'}</span>
+							<span className="block text-xs text-muted">activeElement.tagName</span>
+							<span className="font-mono text-fg">{activeElement?.tagName || '-'}</span>
 						</div>
 						<div>
 							<span className="block text-xs text-muted">isActive(title_0)</span>

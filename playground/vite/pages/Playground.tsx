@@ -295,14 +295,14 @@ function DemoContent({
 }
 
 /**
- * @zh 返回值面板：实时展示 activeId / activeIndex / activeEl / isActive，
+ * @zh 返回值面板：实时展示 activeId / activeIndex / activeElement / isActive，
  * 并提供 setActive 快捷跳转按钮演示命令式 API。
- * @en Return-value panel: shows activeId / activeIndex / activeEl / isActive live,
+ * @en Return-value panel: shows activeId / activeIndex / activeElement / isActive live,
  * with setActive quick-jump buttons demonstrating the imperative API.
  */
 function ValuesPanel() {
 	const { t } = useTranslation()
-	const { activeId, activeIndex, activeEl, isActive, setActive, targets } = useDemo()
+	const { activeId, activeIndex, activeElement, isActive, setActive, targets } = useDemo()
 	const firstId = targets[0] ?? ''
 
 	return (
@@ -318,8 +318,8 @@ function ValuesPanel() {
 					<span className="font-mono text-fg">{activeIndex}</span>
 				</div>
 				<div>
-					<span className="block text-xs">activeEl.tagName</span>
-					<span className="font-mono text-fg">{activeEl?.tagName || '-'}</span>
+					<span className="block text-xs">activeElement.tagName</span>
+					<span className="font-mono text-fg">{activeElement?.tagName || '-'}</span>
 				</div>
 				<div>
 					<span className="block text-xs">isActive(first)</span>

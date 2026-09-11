@@ -1,651 +1,143 @@
 import type { RefObject } from "react";
-import type { ResolvedOptions, Targets, TargetsCache, UseActiveScrollOptions, UseActiveScrollReturn } from "./types";
-import { createElement, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import type { ActiveScrollController, ActiveScrollOptions, ActiveScrollSnapshot, RootSource, TargetsSource } from "scroll-active-toc";
+import type { Targets, UseActiveScrollOptions, UseActiveScrollReturn } from "./types";
+import { createElement, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { createActiveScroll, resolveOptions } from "scroll-active-toc";
 import { Devtools } from "./debug/devtools";
-import {
-	FIXED_OFFSET,
-	getCurrentPos,
-	getEdges,
-	getSentinel,
-	IDLE_FRAMES,
-	last,
-	MOUNT_IDLE_FRAMES,
-	prepareTargets,
-	resolveMediaQueryList,
-	resolveOptions,
-	resolveTargets,
-	SCROLLBAR_WIDTH,
-} from "./utils";
+
+/**
+ * @zh 服务端渲染期间返回的空快照（冻结引用，保证 getServerSnapshot 稳定）。
+ * @en Empty snapshot returned during SSR (frozen reference keeps
+ * getServerSnapshot stable).
+ */
+const NULL_SNAPSHOT: ActiveScrollSnapshot = Object.freeze({
+	activeElement: null,
+	activeId: "",
+	activeIndex: -1,
+});
+
+/**
+ * @zh 判断是否为 RefObject 形态（含 current 字段的对象）。
+ * @en Checks for the RefObject shape (an object with a current field).
+ */
+function isRefLike(value: unknown): value is { current: unknown } {
+	return value !== null && typeof value === "object" && "current" in value;
+}
+
+/**
+ * @zh 把 React 侧的 targets 入参转换为 core 的 TargetsSource：
+ * RefObject 转为 getter，其余原样透传。
+ * @en Converts the React targets argument to a core TargetsSource: a
+ * RefObject becomes a getter; everything else passes through.
+ */
+function toTargetsSource(targets: Targets): TargetsSource {
+	if (isRefLike(targets))
+		return () => (targets.current as string[] | HTMLElement[] | null) ?? [];
+	return targets as TargetsSource;
+}
+
+/**
+ * @zh 把 React 侧的 root 选项转换为 core 的 RootSource：
+ * RefObject 转为 getter，其余原样透传。
+ * @en Converts the React root option to a core RootSource: a RefObject
+ * becomes a getter; everything else passes through.
+ */
+function toRootSource(root: UseActiveScrollOptions["root"]): RootSource | undefined {
+	if (root === undefined)
+		return undefined;
+	if (isRefLike(root))
+		return () => (root as RefObject<HTMLElement | null>).current;
+	return root as RootSource;
+}
+
+/**
+ * @zh 剥离仅 React 层使用的 debug 字段，并把 root 归一化为 core 入参。
+ * @en Strips the React-only debug field and normalizes root for core.
+ */
+function toEngineOptions(options: UseActiveScrollOptions): ActiveScrollOptions {
+	const { debug: _debug, ...rest } = options;
+	return { ...rest, root: toRootSource(options.root) };
+}
 
 /**
  * @zh 滚动激活 Hook。
  *
  * 根据滚动位置自动判定当前应高亮的目标元素，
  * 不执行滚动也不修改 DOM，只输出激活状态供上层 UI 消费。
+ * 本 Hook 是无框架引擎（scroll-active-toc）的薄适配层：
+ * 状态管理与事件装配全部在引擎包中完成，这里只负责 RefObject↔getter
+ * 转换、生命周期挂载与外部 store 订阅。
  * @en Scroll-activation hook.
  *
  * Automatically determines which target element should be highlighted based
  * on the scroll position; it does not scroll or modify the DOM, and only
  * outputs the active state for the upper UI to consume.
+ * This hook is a thin adapter over the framework-agnostic engine
+ * (scroll-active-toc): all state management and listener wiring lives in the
+ * engine package, while this layer only converts RefObjects to getters,
+ * manages the lifecycle and subscribes to the external store.
  */
 export function useActiveScroll(
 	userTargets: Targets,
 	options: UseActiveScrollOptions = {},
 ): UseActiveScrollReturn {
-	// @zh 合并配置，并通过 ref 保证事件回调内始终读到最新配置
-	// @en Merge options; a ref ensures event callbacks always read the latest config
-	const opts = useMemo(() => resolveOptions(options), [options]);
-	const optsRef = useRef<ResolvedOptions>(opts);
-	optsRef.current = opts;
+	// @zh 引擎构造不触碰 DOM，渲染期（含 SSR）创建也是安全的 @en Engine construction touches no DOM, so creating it during render (including SSR) is safe
+	const engineRef = useRef<ActiveScrollController | null>(null);
+	if (engineRef.current === null)
+		engineRef.current = createActiveScroll(toTargetsSource(userTargets), toEngineOptions(options));
+	const engine = engineRef.current;
 
-	// @zh 目标集合 ref，方便在事件回调中读取最新值
-	// @en Ref for the target collection, so callbacks can read the latest value
-	const userTargetsRef = useRef<Targets>(userTargets);
-	userTargetsRef.current = userTargets;
+	// @zh 挂载时启动，卸载时销毁（StrictMode 双调用下 start/destroy 均幂等）@en Start on mount, destroy on unmount (both idempotent under StrictMode double-invocation)
+	useEffect(() => {
+		engine.start();
+		return () => engine.destroy();
+	}, [engine]);
 
-	// @zh 需要触发重渲染的内部状态
-	// @en Internal state that triggers re-renders
-	const [activeEl, setActiveElState] = useState<HTMLElement | null>(null);
-	const [isScrollIdle, setIsScrollIdle] = useState(false);
-	const [isScrollFromTarget, setIsScrollFromTarget] = useState(false);
-	// @zh 媒体查询门控：未传或语法非法时不创建 MediaQueryList，门控不生效（恒为通过）
-	// @en Media query gate: when omitted or syntactically invalid, no MediaQueryList is created and the gate is disabled (always passes)
-	const mql = useMemo(() => {
-		if (typeof window === "undefined")
-			return null;
-		if (!opts.mediaQuery)
-			return null;
-		return resolveMediaQueryList(opts.mediaQuery);
-	}, [opts.mediaQuery]);
+	// @zh 目标集合变化时替换（RefObject 形态引用稳定，getter 每次读到最新值）@en Replace the target collection when it changes (a RefObject keeps a stable reference; the getter always reads the latest value)
+	useEffect(() => {
+		engine.setTargets(toTargetsSource(userTargets));
+	}, [engine, userTargets]);
 
-	// @zh 使用 useSyncExternalStore 同步 matchMedia 状态，避免在 useEffect 中直接 setState；
-	// 无门控（mql 为 null）时恒为 true，即始终启用监听
-	// @en Sync matchMedia state via useSyncExternalStore to avoid calling setState directly in useEffect;
-	// without a gate (mql null) it stays true, i.e. listeners are always enabled
-	const matchMedia = useSyncExternalStore(
-		useCallback(
-			(callback: () => void) => {
-				if (!mql)
-					return () => {};
-				mql.addEventListener("change", callback);
-				return () => mql.removeEventListener("change", callback);
-			},
-			[mql],
-		),
-		() => (mql ? mql.matches : true),
-		() => true,
-	);
-
-	// @zh 用 ref 镜像 activeEl，供未在依赖列表中的事件监听器读取最新值
-	// @en Mirror activeEl in a ref so listeners missing from the dependency array read the latest value
-	const activeElRef = useRef<HTMLElement | null>(activeEl);
-	activeElRef.current = activeEl;
-
-	// @zh 稳定的状态设置函数，避免暴露的 callback 引用变化
-	// @en Stable state setter to keep the exposed callback reference unchanged
-	const setActiveEl = useCallback((el: HTMLElement | null) => {
-		activeElRef.current = el;
-		setActiveElState(el);
-	}, []);
-
-	// @zh 不触发重渲染的内部缓存
-	// @en Internal caches that do not trigger re-renders
-	const rootRef = useRef<HTMLElement | null>(null);
-	const isWindowRootRef = useRef(false);
-	const targetsRef = useRef<TargetsCache>({
-		els: [],
-		start: new Map(),
-		end: new Map(),
+	// @zh 配置在每次渲染后同步给引擎，等价于旧实现的 optsRef 镜像；
+	// 实质字段未变时引擎内部为空操作。
+	// @en Sync options to the engine after every render, equivalent to the
+	// optsRef mirror in the old implementation; the engine no-ops when no
+	// material field changed.
+	useEffect(() => {
+		engine.setOptions(toEngineOptions(options));
 	});
-	const prevScrollPosRef = useRef(0);
-	const clickStartPosRef = useRef(0);
-	const resizeObserverRef = useRef<ResizeObserver | null>(null);
-	const skipObserverCallbackRef = useRef(true);
-	const idleRafRef = useRef<number | null>(null);
 
-	// @zh 派生返回值
-	// @en Derived return values
-	const activeId = useMemo(() => activeEl?.id || "", [activeEl]);
-	const activeIndex = useMemo(
-		() => targetsRef.current.els.indexOf(activeEl as HTMLElement),
-		[activeEl],
+	// @zh 外部 store 协议：快照引用仅在激活目标变化时变更 @en External-store protocol: the snapshot reference changes only when the active target changes
+	const snapshot = useSyncExternalStore(
+		engine.subscribe,
+		engine.getSnapshot,
+		() => NULL_SNAPSHOT,
 	);
 
-	/**
-	 * @zh 根据 URL hash 设置初始激活目标。
-	 * @en Sets the initial active target based on the URL hash.
-	 */
-	function setFromHash(): boolean {
-		if (typeof window === "undefined")
-			return false;
-
-		const hash = window.location.hash.slice(1);
-		if (!hash)
-			return false;
-
-		const target = targetsRef.current.els.find(el => el.id === hash);
-		if (target) {
-			setActiveEl(target);
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * @zh 到达滚动起点/终点边界时强制激活首尾目标。
-	 * @en Forces activation of the first/last target when the scroll
-	 * start/end boundary is reached.
-	 */
-	function onEdgeReached(): boolean {
-		const { first, last: edgesLast } = optsRef.current.edges;
-		if (first !== true && edgesLast !== true)
-			return false;
-		if (!rootRef.current)
-			return false;
-
-		const { isStart, isEnd } = getEdges(optsRef.current.direction, rootRef.current, isWindowRootRef.current);
-
-		if (first === true && isStart) {
-			setActiveEl(targetsRef.current.els[0] || null);
-			return true;
-		}
-
-		if (edgesLast === true && isEnd) {
-			setActiveEl(last(targetsRef.current.els) || null);
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * @zh 朝滚动终点方向滚动时的激活判定。
-	 * @en Activation logic when scrolling toward the scroll end.
-	 */
-	function onScrollToEnd(isScrollCancel = false): void {
-		const { els, start, end } = targetsRef.current;
-		if (els.length === 0)
-			return;
-
-		const { first, last: edgesLast } = optsRef.current.edges;
-		let firstOutEl: HTMLElement | null = first === true
-			? els[0]
-			: null;
-
-		const sentinel = getSentinel(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
-		const offset = FIXED_OFFSET + optsRef.current.overlay + optsRef.current.offset.toEnd;
-
-		Array.from(start).some(([_, startPos], idx) => {
-			const _firstOffset = first !== true && idx === 0
-				? first
-				: 0;
-
-			if (sentinel + startPos < offset + _firstOffset) {
-				firstOutEl = els[idx];
-				return false;
-			}
-			return true;
-		});
-
-		if (edgesLast !== true && firstOutEl === last(els)) {
-			const lastEnd = last(Array.from(end.values()));
-			if (lastEnd !== undefined && sentinel + lastEnd < offset - edgesLast) {
-				setActiveEl(null);
-				return;
-			}
-		}
-
-		const isNext = els.indexOf(firstOutEl as HTMLElement) > els.indexOf(activeElRef.current as HTMLElement);
-
-		if (isNext || (firstOutEl && !activeElRef.current)) {
-			setActiveEl(firstOutEl);
-		}
-		else if (isScrollCancel) {
-			setActiveEl(firstOutEl);
-		}
-	}
-
-	/**
-	 * @zh 朝滚动起点方向滚动时的激活判定。
-	 * @en Activation logic when scrolling toward the scroll start.
-	 */
-	function onScrollToStart(): void {
-		const { els, start, end } = targetsRef.current;
-		if (els.length === 0)
-			return;
-
-		const { first, last: edgesLast } = optsRef.current.edges;
-		let firstInEl: HTMLElement | null = edgesLast === true
-			? last(els)!
-			: null;
-
-		const sentinel = getSentinel(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
-		const offset = FIXED_OFFSET + optsRef.current.overlay + optsRef.current.offset.toStart;
-
-		Array.from(end).some(([_, endPos], idx) => {
-			const _lastOffset = edgesLast !== true && idx === end.size - 1
-				? -edgesLast
-				: 0;
-
-			if (sentinel + endPos > offset + _lastOffset) {
-				firstInEl = els[idx];
-				return true;
-			}
-			return false;
-		});
-
-		if (first !== true && firstInEl === els[0]) {
-			const firstStart = start.values().next().value;
-			if (firstStart !== undefined && sentinel + firstStart > offset + first) {
-				setActiveEl(null);
-				return;
-			}
-		}
-
-		const isPrev = els.indexOf(firstInEl as HTMLElement) < els.indexOf(activeElRef.current as HTMLElement);
-
-		if (isPrev || (firstInEl && !activeElRef.current)) {
-			setActiveEl(firstInEl);
-		}
-	}
-
-	/**
-	 * @zh 核心判定入口：根据滚动方向分发到起点/终点判定。
-	 * @en Core entry point: dispatches to the start/end logic based on the
-	 * scroll direction.
-	 */
-	function processScroll(prevPos: number, isScrollCancel: boolean): number {
-		const nextPos = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
-
-		if (nextPos < prevPos) {
-			onScrollToStart();
-		}
-		else {
-			onScrollToEnd(isScrollCancel);
-		}
-
-		return nextPos;
-	}
-
-	/**
-	 * @zh 滚动空闲检测：连续若干帧位置不变后认为滚动停止。
-	 * @en Scroll idle detection: scrolling is considered stopped after the
-	 * position stays unchanged for several consecutive frames.
-	 */
-	function setIdleScroll(maxFrames: number = IDLE_FRAMES): void {
-		if (idleRafRef.current !== null) {
-			window.cancelAnimationFrame(idleRafRef.current);
-		}
-
-		let frameCount = 0;
-		let rafPrevPos = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
-		let rafId: number;
-
-		const scrollEnd = () => {
-			frameCount++;
-			const rafNextPos = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
-
-			if (rafPrevPos !== rafNextPos) {
-				frameCount = 0;
-				rafPrevPos = rafNextPos;
-				rafId = window.requestAnimationFrame(scrollEnd);
-				idleRafRef.current = rafId;
-				return;
-			}
-
-			if (frameCount === maxFrames) {
-				setIsScrollIdle(true);
-				setIsScrollFromTarget(false);
-				window.cancelAnimationFrame(rafId);
-				idleRafRef.current = null;
-			}
-			else {
-				rafId = window.requestAnimationFrame(scrollEnd);
-				idleRafRef.current = rafId;
-			}
-		};
-
-		rafId = window.requestAnimationFrame(scrollEnd);
-		idleRafRef.current = rafId;
-	}
-
-	/**
-	 * @zh 注册 ResizeObserver，在容器或目标尺寸变化时重新计算位置并判定。
-	 * @en Registers a ResizeObserver to recompute positions and re-evaluate
-	 * when the container or targets change size.
-	 */
-	function setResizeObserver(): void {
-		if (resizeObserverRef.current)
-			return;
-		if (!rootRef.current)
-			return;
-
-		resizeObserverRef.current = new ResizeObserver(() => {
-			if (!skipObserverCallbackRef.current) {
-				prepareTargets(
-					userTargetsRef.current,
-					rootRef.current!,
-					isWindowRootRef.current,
-					targetsRef,
-					optsRef.current.direction,
-				);
-				window.requestAnimationFrame(() => {
-					if (!onEdgeReached())
-						onScrollToEnd();
-				});
-			}
-			else {
-				skipObserverCallbackRef.current = false;
-			}
-		});
-
-		resizeObserverRef.current.observe(rootRef.current);
-	}
-
-	/**
-	 * @zh 断开 ResizeObserver。
-	 * @en Disconnects the ResizeObserver.
-	 */
-	function destroyResizeObserver(): void {
-		resizeObserverRef.current?.disconnect();
-		resizeObserverRef.current = null;
-	}
-
-	/**
-	 * @zh 浏览器前进/后退事件处理。
-	 * @en Handles browser forward/back events.
-	 */
-	function onPrevNext(): void {
-		const hash = window.location.hash;
-		if (!hash && activeElRef.current) {
-			setActiveEl(optsRef.current.edges.first === true ? targetsRef.current.els[0] : null);
-			return;
-		}
-		setFromHash();
-	}
-
-	/**
-	 * @zh 注册 popstate 监听。
-	 * @en Registers the popstate listener.
-	 */
-	function addPrevNextListener(): void {
-		window.addEventListener("popstate", onPrevNext);
-	}
-
-	/**
-	 * @zh 移除 popstate 监听。
-	 * @en Removes the popstate listener.
-	 */
-	function removePrevNextListener(): void {
-		window.removeEventListener("popstate", onPrevNext);
-	}
-
-	/**
-	 * @zh 挂载时使用的较短空闲检测。
-	 * @en Shorter idle detection used on mount.
-	 */
-	function setMountIdle(): void {
-		setIdleScroll(MOUNT_IDLE_FRAMES);
-	}
-
-	/**
-	 * @zh 清理 pending 的 requestAnimationFrame。
-	 * @en Cancels the pending requestAnimationFrame.
-	 */
-	function cancelIdleRaf(): void {
-		if (idleRafRef.current !== null) {
-			window.cancelAnimationFrame(idleRafRef.current);
-			idleRafRef.current = null;
-		}
-	}
-
-	// @zh 解析 rootEl
-	// @en Resolve rootEl
-	useEffect(() => {
-		const resolvedRoot
-			= opts.root && "current" in opts.root
-				? (opts.root as RefObject<HTMLElement | null>).current
-				: opts.root;
-
-		if (resolvedRoot instanceof HTMLElement) {
-			rootRef.current = resolvedRoot;
-			isWindowRootRef.current = false;
-		}
-		else {
-			rootRef.current = typeof document !== "undefined" ? document.documentElement : null;
-			isWindowRootRef.current = true;
-		}
-	}, [opts.root]);
-
-	// @zh 初始化：注册监听并设置初始激活目标
-	// @en Initialization: register listeners and set the initial active target
-	useEffect(() => {
-		if (typeof window === "undefined")
-			return;
-		if (!rootRef.current)
-			return;
-		if (!matchMedia)
-			return;
-
-		// @zh root / direction 运行时切换时，主滚动监听 effect 的依赖不含 root，
-		// 仅靠 isScrollIdle 的 false→true 跳变才会重新绑定到新容器；这里先复位为 false，
-		// 让随后 setMountIdle 的 idle 检测再次把它置 true，从而触发主监听 effect 重新挂载到
-		// 新滚动根（窗口↔容器切换时尤其关键，否则监听仍挂在旧根上、目录不激活）。
-		// @en When root / direction switches at runtime, the main scroll-listener effect
-		// (whose deps omit root) only re-binds to the new container via the false→true
-		// transition of isScrollIdle; resetting it to false here lets the subsequent
-		// setMountIdle idle-detection flip it back to true, retriggering the listener
-		// effect to re-attach to the new scroll root (critical for window↔container
-		// switches, otherwise the listener stays on the old root and the TOC never activates).
-		setIsScrollIdle(false);
-
-		const timer = window.setTimeout(() => {
-			prepareTargets(
-				userTargetsRef.current,
-				rootRef.current!,
-				isWindowRootRef.current,
-				targetsRef,
-				optsRef.current.direction,
-			);
-			setResizeObserver();
-			setMountIdle();
-			addPrevNextListener();
-
-			if (!setFromHash() && !onEdgeReached()) {
-				onScrollToEnd();
-			}
-		}, 0);
-
-		return () => {
-			window.clearTimeout(timer);
-			removePrevNextListener();
-			destroyResizeObserver();
-			cancelIdleRaf();
-			setActiveEl(null);
-		};
-	}, [matchMedia, userTargets, opts.root, opts.direction]);
-
-	// @zh targets、root 或 direction 变化时重新缓存位置
-	// @en Re-cache positions when targets, root, or direction changes
-	useEffect(() => {
-		if (!matchMedia || !rootRef.current)
-			return;
-
-		prepareTargets(
-			userTargetsRef.current,
-			rootRef.current,
-			isWindowRootRef.current,
-			targetsRef,
-			optsRef.current.direction,
-		);
-	}, [userTargets, opts.root, opts.direction, matchMedia]);
-
-	// @zh 主滚动监听：仅在滚动空闲、媒体查询门控通过且存在目标时注册
-	// @en Main scroll listener: registered only when scrolling is idle, the media query gate passes, and targets exist
-	useEffect(() => {
-		if (typeof window === "undefined")
-			return;
-		if (!isScrollIdle || !matchMedia || !rootRef.current)
-			return;
-		if (resolveTargets(userTargetsRef.current).length === 0)
-			return;
-
-		const rootEl = isWindowRootRef.current ? document : rootRef.current;
-
-		const onScroll = () => {
-			if (!isScrollFromTarget) {
-				prevScrollPosRef.current = processScroll(prevScrollPosRef.current, false);
-				onEdgeReached();
-			}
-		};
-
-		rootEl.addEventListener("scroll", onScroll, { passive: true });
-
-		return () => {
-			rootEl.removeEventListener("scroll", onScroll);
-		};
-	}, [isScrollIdle, matchMedia, userTargets, isScrollFromTarget]);
-
-	// @zh 目标触发滚动后的动态事件监听：检测到用户干预时恢复普通判定
-	// @en Dynamic listeners after a target-triggered scroll: resume normal logic when user intervention is detected
-	useEffect(() => {
-		if (typeof window === "undefined")
-			return;
-		if (!isScrollFromTarget)
-			return;
-		if (resolveTargets(userTargetsRef.current).length === 0)
-			return;
-
-		const rootEl = isWindowRootRef.current ? document : rootRef.current!;
-
-		const restoreHighlight = () => setIsScrollFromTarget(false);
-
-		const onSpaceBar: EventListener = (event) => {
-			if ((event as KeyboardEvent).code === "Space")
-				restoreHighlight();
-		};
-
-		const onScrollCancel: EventListener = (event) => {
-			const isAnchor = (event.target as HTMLElement).tagName === "A";
-			if (!isAnchor) {
-				const isFirefox = window.CSS.supports("-moz-appearance", "none");
-				const horizontal = optsRef.current.direction === "horizontal";
-				// @zh 纵向滚动条贴容器右缘，横向滚动条贴容器底缘
-				// @en The vertical scrollbar sits on the container's right edge; the horizontal scrollbar on the bottom edge
-				const containerSize = isWindowRootRef.current
-					? (horizontal ? window.innerHeight : window.innerWidth)
-					: (horizontal ? rootRef.current!.clientHeight : rootRef.current!.clientWidth);
-				const clickPos = horizontal
-					? (event as PointerEvent).clientY
-					: (event as PointerEvent).clientX;
-				const isScrollbar = clickPos >= containerSize - SCROLLBAR_WIDTH;
-
-				if (isFirefox || isScrollbar) {
-					restoreHighlight();
-					prevScrollPosRef.current = processScroll(clickStartPosRef.current, true);
-				}
-			}
-		};
-
-		const onScrollIdleEvent: EventListener = () => setIdleScroll();
-
-		rootEl.addEventListener("wheel", restoreHighlight, { once: true });
-		rootEl.addEventListener("touchmove", restoreHighlight, { once: true });
-		rootEl.addEventListener("keydown", onSpaceBar, { once: true });
-		rootEl.addEventListener("scroll", onScrollIdleEvent, { passive: true, once: true });
-		rootEl.addEventListener("pointerdown", onScrollCancel);
-
-		return () => {
-			rootEl.removeEventListener("wheel", restoreHighlight);
-			rootEl.removeEventListener("touchmove", restoreHighlight);
-			rootEl.removeEventListener("keydown", onSpaceBar);
-			rootEl.removeEventListener("scroll", onScrollIdleEvent);
-			rootEl.removeEventListener("pointerdown", onScrollCancel);
-		};
-	}, [isScrollFromTarget, userTargets]);
-
-	// @zh 同步 URL hash
-	// @en Sync the URL hash
-	useEffect(() => {
-		if (opts.hash === "off")
-			return;
-		if (typeof window === "undefined")
-			return;
-
-		const baseUrl = location.href.split("#")[0];
-		const start = opts.edges.first === true ? 0 : -1;
-		const newHash = activeIndex > start ? `#${activeId}` : "";
-
-		// @zh 与当前地址一致时跳过，避免多余的状态替换或重复历史记录
-		// @en Skip when it matches the current URL to avoid redundant state replacement or duplicate history entries
-		if (location.hash === newHash)
-			return;
-
-		const url = `${baseUrl}${newHash}`;
-		if (opts.hash === "push")
-			history.pushState(history.state, "", url);
-		else
-			history.replaceState(history.state, "", url);
-	}, [activeId, activeIndex, opts.hash, opts.edges.first]);
-
-	// @zh 暴露方法
-	// @en Exposed methods
-	const setActive = useCallback((target: string | HTMLElement) => {
-		if (typeof window === "undefined")
-			return;
-
-		let sourceTarget: HTMLElement | null = null;
-
-		if (typeof target === "string") {
-			sourceTarget = targetsRef.current.els.find(({ id }) => id === target) || null;
-		}
-		else if (target instanceof HTMLElement) {
-			sourceTarget = targetsRef.current.els.find(el => el === target) || null;
-		}
-
-		if (sourceTarget) {
-			setActiveEl(sourceTarget);
-			setIsScrollFromTarget(true);
-			clickStartPosRef.current = getCurrentPos(optsRef.current.direction, isWindowRootRef.current, rootRef.current!);
-		}
-	}, []);
-
-	const isActive = useCallback(
-		(target: string | HTMLElement) => {
-			if (typeof window === "undefined")
-				return false;
-			if (typeof target === "string")
-				return target === activeId;
-			if (target instanceof HTMLElement)
-				return target === activeEl;
-			return false;
-		},
-		[activeId, activeEl],
-	);
-
-	// @zh debug 开启时构造触发线覆盖层节点（hook 本身不挂载 DOM，由消费者渲染该节点）
-	// @en Build the trigger-line overlay node when debug is enabled (the hook mounts no DOM itself; consumers render this node)
+	// @zh debug 开启时构造触发线覆盖层节点（hook 本身不挂载 DOM，由消费者渲染该节点）@en Build the trigger-line overlay node when debug is enabled (the hook mounts no DOM itself; consumers render this node)
 	const devtools = useMemo(() => {
-		if (opts.debug === false)
+		if (options.debug === false || options.debug === undefined)
 			return null;
+		const resolved = resolveOptions(toEngineOptions(options));
+		const debugConfig = options.debug === true ? {} : options.debug;
 		return createElement(Devtools, {
-			root: opts.root,
-			direction: opts.direction,
-			overlay: opts.overlay,
-			edges: opts.edges,
-			offset: opts.offset,
-			label: opts.debug.label,
-			className: opts.debug.className,
+			root: options.root ?? null,
+			direction: resolved.direction,
+			overlay: resolved.overlay,
+			edges: resolved.edges,
+			offset: resolved.offset,
+			label: debugConfig.label,
+			className: debugConfig.className,
 		});
-	}, [opts]);
+		// @zh 与旧实现一致：options 引用变化时重建节点 @en Rebuild the node when the options reference changes, matching the old implementation
+	}, [options]);
 
 	return {
-		setActive,
-		isActive,
-		activeEl,
-		activeId,
-		activeIndex,
+		setActive: engine.setActive,
+		isActive: engine.isActive,
+		activeElement: snapshot.activeElement,
+		activeId: snapshot.activeId,
+		activeIndex: snapshot.activeIndex,
 		devtools,
 	};
 }

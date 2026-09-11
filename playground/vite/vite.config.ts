@@ -2,8 +2,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
 import { codeInspectorPlugin } from "code-inspector-plugin";
+import { defineConfig } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,7 +20,7 @@ export default defineConfig({
 	resolve: {
 		alias: {
 			// @zh 将包名映射到本地源码，避免演示项目依赖已构建产物。
-			// @en Map the package name to local source so the demo does not depend on built artifacts.
+			// @en Map the package names to local source so the demo does not depend on built artifacts.
 			"react-use-active-scroll": path.resolve(__dirname, "../../src"),
 		},
 	},

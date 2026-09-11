@@ -190,7 +190,7 @@ export interface UseActiveScrollReturn {
 	 * @zh 当前激活元素。
 	 * @en The currently active element.
 	 */
-	activeEl: HTMLElement | null
+	activeElement: HTMLElement | null
 
 	/**
 	 * @zh 当前激活元素的 ID。

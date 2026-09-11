@@ -1,7 +1,8 @@
-import { copyFileSync, readFileSync } from "node:fs";
+import { copyFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
 import dts from "unplugin-dts/vite";
+import { defineConfig } from "vite";
 
 const pkg = JSON.parse(
 	readFileSync(fileURLToPath(new URL("./package.json", import.meta.url)), "utf-8"),
@@ -16,31 +17,69 @@ const banner = `/**
  */
 `;
 
+/**
+ * @zh 递归处理 dist 下的类型声明：
+ * - dts 插件（多入口 bundleTypes 模式）产出的是自包含的 .d.ts，
+ *   为每个 .d.ts 补齐同名 .d.mts 与 .d.cts，供 import/require 两种入口引用；
+ * - 若插件直接产出 .d.mts，则照旧复制为 .d.cts。
+ * @en Processes declaration files under dist recursively:
+ * - the dts plugin (multi-entry bundleTypes mode) emits self-contained .d.ts
+ *   files; for each one, produce same-named .d.mts and .d.cts for the
+ *   import/require entries;
+ * - when the plugin emits .d.mts directly, copy it to .d.cts as before.
+ */
+function copyDtsFiles(dir: string): void {
+	for (const entry of readdirSync(dir, { withFileTypes: true })) {
+		const fullPath = join(dir, entry.name);
+		if (entry.isDirectory()) {
+			copyDtsFiles(fullPath);
+			continue;
+		}
+
+		if (entry.name.endsWith(".d.mts")) {
+			copyFileSync(fullPath, fullPath.replace(/\.d\.mts$/, ".d.cts"));
+		}
+		else if (entry.name.endsWith(".d.ts")) {
+			const mtsPath = fullPath.replace(/\.d\.ts$/, ".d.mts");
+			const ctsPath = fullPath.replace(/\.d\.ts$/, ".d.cts");
+			if (!existsSync(mtsPath))
+				copyFileSync(fullPath, mtsPath);
+			if (!existsSync(ctsPath))
+				copyFileSync(fullPath, ctsPath);
+		}
+	}
+}
+
 export default defineConfig({
 	build: {
 		emptyOutDir: true,
+		minify: false,
+		sourcemap: true,
 
 		lib: {
-			entry: "src/index.ts",
+			// @zh 单入口：React 适配层；无框架引擎由独立包 scroll-active-toc 提供（作为依赖外置）
+			// @en Single entry: the React adapter; the framework-agnostic engine ships as the separate scroll-active-toc package (externalized as a dependency)
+			entry: {
+				index: "src/index.ts",
+			},
 			name: "react-use-active-scroll",
 			formats: ["es", "cjs"],
-			fileName: (format) => {
-				if (format === 'es') return 'index.mjs'
-				if (format === 'cjs') return 'index.cjs'
-				return `index.${format}`
-			}
+			fileName: (format, entryName = "index") => {
+				if (format === "es")
+					return `${entryName}.mjs`;
+				if (format === "cjs")
+					return `${entryName}.cjs`;
+				return `${entryName}.${format}`;
+			},
 		},
 		rolldownOptions: {
-			// @zh 同时外置 react/jsx-runtime（Devtools.tsx 的 automatic JSX 运行时），否则会被打进产物
-			// @en Also externalize react/jsx-runtime (the automatic JSX runtime used by Devtools.tsx), otherwise it would be bundled
-			external: [/^react(\/.*)?$/],
+			// @zh 外置 react（含 jsx-runtime，Devtools.ts 的 automatic JSX 运行时）与引擎包 scroll-active-toc，
+			// 它们均由包的依赖在运行时提供，不会被打进产物。
+			// @en Externalize react (including jsx-runtime, the automatic JSX runtime used by Devtools.ts)
+			// and the scroll-active-toc engine package; both are provided at runtime by package dependencies.
+			external: [/^react(\/.*)?$/, /^scroll-active-toc(\/.*)?$/],
 			output: {
-				minify: {
-					compress: {
-						dropConsole: true,
-					},
-				},
-				postBanner:banner,
+				postBanner: banner,
 			},
 		},
 	},
@@ -48,14 +87,12 @@ export default defineConfig({
 		dts({
 			bundleTypes: true,
 			// @zh 不配置 outDirs：配合 bundleTypes 时它会让 .d.cts/.d.mts 变成路径引用而非内联类型，
-			// 且引用的文件并不存在。依赖默认输出得到 index.d.mts，再在 afterBuild 中复制为 .d.cts。
+			// 且引用的文件并不存在。依赖默认输出按入口生成 .d.mts，再在 afterBuild 中复制为 .d.cts。
 			// @en Do not configure outDirs: with bundleTypes it would turn .d.cts/.d.mts into path references
-			// instead of inlined types, and the referenced files do not exist. Rely on the default output to
-			// produce index.d.mts, then copy it to .d.cts in afterBuild.
+			// instead of inlined types, and the referenced files do not exist. Rely on the default per-entry
+			// .d.mts output, then copy them to .d.cts in afterBuild.
 			afterBuild: () => {
-				const dtsMts = fileURLToPath(new URL("./dist/index.d.mts", import.meta.url));
-				const dtsCts = fileURLToPath(new URL("./dist/index.d.cts", import.meta.url));
-				copyFileSync(dtsMts, dtsCts);
+				copyDtsFiles(fileURLToPath(new URL("./dist", import.meta.url)));
 			},
 		}),
 	],

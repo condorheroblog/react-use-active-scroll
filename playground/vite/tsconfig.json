@@ -5,17 +5,17 @@
 		"lib": ["ESNext", "DOM"],
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"types": ["vite/client"],
 		"paths": {
 			"react-use-active-scroll": ["../../src"]
 		},
+		"resolveJsonModule": true,
+		"types": ["vite/client"],
 		"strict": true,
 		"noEmit": true,
-		"isolatedModules": true,
-		"skipLibCheck": true,
-		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
-		"resolveJsonModule": true
+		"esModuleInterop": true,
+		"isolatedModules": true,
+		"skipLibCheck": true
 	},
 	"include": ["."]
 }

@@ -1,3 +1,5 @@
+import "./globals.css";
+
 export const metadata = {
 	title: "react-use-active-scroll + Next.js",
 	description: "Next.js demo for react-use-active-scroll.",

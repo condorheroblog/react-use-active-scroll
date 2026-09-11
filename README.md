@@ -138,7 +138,7 @@ export function Sidebar() {
 | ----------- | -------------------------------------------- | --------------------------------------------------------------------------- |
 | setActive   | `(target: string \| HTMLElement) => void`    | Include it in your click handler to ensure adaptive behavior.               |
 | isActive    | `(target: string \| HTMLElement) => boolean` | Whether the given ID or element is currently active.                        |
-| activeEl    | `HTMLElement \| null`                        | The active target element.                                                  |
+| activeElement | `HTMLElement \| null`                      | The active target element.                                                  |
 | activeId    | `string`                                     | The active target ID, an empty string when inactive.                        |
 | activeIndex | `number`                                     | Index of the active target in offset order, `-1` when inactive.             |
 | devtools    | `ReactNode`                                  | Trigger-line debug overlay node, `null` unless `debug` is enabled. Render it anywhere for window scrolling, or as a sibling of the scroll container inside a `position: relative` wrapper for container scrolling. |
@@ -251,7 +251,7 @@ export function Sidebar() {
 		{/* sections */}
 	</div>
 	{devtools}
-</div>
+</div>;
 ```
 
 **Reading the lines.** Dashed lines are the directional trigger lines: `↓` / `→` scroll toward the end (`offset.toEnd`), `↑` / `←` scroll toward the start (`offset.toStart`). Dotted lines are the first/last edge-offset lines and only appear when `edges.first` / `edges.last` are numbers (or `false`). Coincident lines are merged into one label, and every label shows its position in px from the root border-box. A line beyond the start edge (negative position) is shown as a pinned `off-screen` marker.

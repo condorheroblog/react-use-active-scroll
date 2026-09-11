@@ -28,7 +28,7 @@ export interface DemoContextValue {
 	effectiveOverlay: number
 	activeId: string
 	activeIndex: number
-	activeEl: HTMLElement | null
+	activeElement: HTMLElement | null
 	isActive: (target: string | HTMLElement) => boolean
 	setActive: (target: string | HTMLElement) => void
 	/**
@@ -116,7 +116,7 @@ export function DemoProvider({
 
 	// @zh ====== 全应用唯一一处调用核心包 Hook ======
 	// @en ====== The single place in the whole app that calls the core hook ======
-	const { activeId, activeIndex, activeEl, isActive, setActive, devtools } = useActiveScroll(targets, options)
+	const { activeId, activeIndex, activeElement, isActive, setActive, devtools } = useActiveScroll(targets, options)
 
 	// @zh native 模式由 CSS scroll-behavior 控制；custom 模式由 JS 动画库接管，
 	// 容器滚动场景需要把 scroll-behavior 设为 auto，避免与 JS 动画冲突。
@@ -138,7 +138,7 @@ export function DemoProvider({
 			effectiveOverlay,
 			activeId,
 			activeIndex,
-			activeEl,
+			activeElement,
 			isActive,
 			setActive,
 			devtools,
@@ -153,7 +153,7 @@ export function DemoProvider({
 			effectiveOverlay,
 			activeId,
 			activeIndex,
-			activeEl,
+			activeElement,
 			isActive,
 			setActive,
 			devtools,
