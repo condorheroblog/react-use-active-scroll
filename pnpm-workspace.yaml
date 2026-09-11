@@ -1,12 +1,11 @@
 allowBuilds:
   esbuild: true
   node-pty: true
-  scroll-active-toc: true
   simple-git-hooks: true
 minimumReleaseAgeExclude:
   - bumpp@12.3.0
   - '@types/react-dom@19.2.7'
-  - scroll-active-toc@0.0.1
+  - scroll-active-toc@0.0.2
 packages:
   - .
   - playground/*

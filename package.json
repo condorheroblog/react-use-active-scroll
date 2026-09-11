@@ -51,7 +51,7 @@
 		"dist/*"
 	],
 	"scripts": {
-		"postinstall": "simple-git-hooks",
+		"prepare": "simple-git-hooks",
 		"prepublishOnly": "npm run build",
 		"build": "rm -rf dist && tsc --noEmit && vite build",
 		"test": "vitest",
@@ -61,7 +61,7 @@
 		"release": "bumpp -r && pnpm -r publish --access public"
 	},
 	"dependencies": {
-		"scroll-active-toc": "^0.0.1"
+		"scroll-active-toc": "^0.0.2"
 	},
 	"devDependencies": {
 		"@antfu/eslint-config": "^9.5.1",
