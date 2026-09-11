@@ -1,7 +1,7 @@
 {
 	"name": "react-use-active-scroll-vite-playground",
 	"type": "module",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"private": true,
 	"description": "Vite + React Router demo for react-use-active-scroll.",
 	"scripts": {

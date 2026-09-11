@@ -1,7 +1,7 @@
 {
 	"name": "react-use-active-scroll",
 	"type": "module",
-	"version": "0.0.0",
+	"version": "0.0.1",
 	"private": false,
 	"description": "Accurate TOC/sidebar links without compromises for React.",
 	"author": {
